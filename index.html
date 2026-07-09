@@ -1967,6 +1967,17 @@
       .roster-chip { font-size:.86rem; padding:7px 11px; }
       .btn-xl { font-size:1.02rem; padding:13px 14px; }
     }
+
+    /* ---- กราฟคะแนนเฉลี่ยแต่ละหัวข้อ ---- */
+    .tsc{ display:grid; gap:10px; }
+    .tsc-row{ display:grid; grid-template-columns:minmax(140px,1.5fr) 3fr 66px; align-items:center; gap:12px; }
+    .tsc-label{ font-weight:800; color:#2b2166; font-size:.95rem; line-height:1.2; }
+    .tsc-sub{ display:block; color:var(--muted); font-weight:700; font-size:.76rem; }
+    .tsc-barwrap{ height:16px; border-radius:999px; background:#eef0fb; overflow:hidden; box-shadow:inset 0 1px 3px rgba(40,33,97,.1); }
+    .tsc-bar{ display:block; height:100%; width:0; border-radius:999px; background:#c7c9de; transition:width .6s cubic-bezier(.22,1,.36,1); }
+    .tsc-val{ font-weight:800; text-align:right; }
+    .tsc-val small{ font-weight:700; color:var(--muted); }
+    @media (max-width:600px){ .tsc-row{ grid-template-columns:1fr auto; } .tsc-barwrap{ grid-column:1/-1; order:3; } .tsc-val{ text-align:right; } }
   </style>
 </head>
 <body>
@@ -2155,6 +2166,12 @@
       <div id="trend-body" class="trend-body"><div class="trend-empty">— กำลังโหลด —</div></div>
     </section>
 
+    <!-- คะแนนเฉลี่ยแต่ละหัวข้อ (ภาพรวมทุกคนไข้) -->
+    <section class="metric-card" style="display:block; margin-bottom:22px;">
+      <div class="metric-label mb-3" style="font-size:1.05rem;"><i class="fa-solid fa-layer-group me-2"></i> คะแนนเฉลี่ยแต่ละหัวข้อ (ภาพรวมทุกคนไข้ · เต็ม 2)</div>
+      <div id="topic-scores"><div class="trend-empty">— กำลังโหลด —</div></div>
+    </section>
+
     <section class="directory-panel" id="patient-directory">
       <div class="panel-head">
         <div>
@@ -2175,6 +2192,22 @@
   </main>
 
   <!-- ==================== Training Studio ==================== -->
+  <style>
+    /* ---- ความคืบหน้าการประเมิน: บังคับให้ครบทุกคำ/สระในทุกหัวข้อ ---- */
+    .assess-progress{ margin-top:12px; padding:12px 14px; background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.18); border-radius:14px; }
+    .assess-progress .ap-top{ display:flex; justify-content:space-between; align-items:center; font-weight:700; color:#dbeafe; font-size:.95rem; }
+    .assess-progress .ap-top #ap-count{ background:#fff; color:#1d4ed8; border-radius:999px; padding:2px 10px; font-size:.9rem; }
+    .assess-progress .ap-bar{ height:8px; background:rgba(255,255,255,.22); border-radius:999px; overflow:hidden; margin:8px 0 6px; }
+    .assess-progress .ap-fill{ height:100%; width:0; background:linear-gradient(90deg,#34d399,#10b981); border-radius:999px; transition:width .3s ease; }
+    .assess-progress .ap-status{ font-size:.82rem; color:#e0e7ff; line-height:1.35; }
+    .assess-progress .ap-status.done{ color:#bbf7d0; font-weight:700; }
+    .topic-item .topic-progress{ margin-left:auto; flex:0 0 auto; font-size:.78rem; font-weight:700; background:rgba(0,0,0,.06); color:#475569; border-radius:999px; padding:2px 9px; white-space:nowrap; }
+    .topic-item.active .topic-progress{ background:rgba(255,255,255,.22); color:#fff; }
+    .topic-item .topic-progress.complete{ background:#dcfce7; color:#15803d; }
+    .topic-item.active .topic-progress.complete{ background:#bbf7d0; color:#14532d; }
+    .word-badge.done{ position:relative; border-color:#22c55e !important; background:#f0fdf4 !important; }
+    .word-badge.done::after{ content:"\2713"; position:absolute; top:-6px; right:-6px; width:18px; height:18px; line-height:18px; text-align:center; background:#22c55e; color:#fff; border-radius:50%; font-size:11px; font-weight:700; }
+  </style>
   <main id="view-training" class="training-shell d-none-h">
     <aside class="training-rail">
       <button onclick="goBack()" class="btn btn-outline-secondary btn-xl w-100 mb-3"><i class="fa-solid fa-arrow-left"></i> กลับหน้าหลัก</button>
@@ -2183,6 +2216,11 @@
         <h3 id="patient-display">-</h3>
         <div id="patient-dx" class="hn-chip d-inline-block mb-2 d-none-h" style="background:#fff3f2;color:#b42318;border-color:#fecdca;"></div>
         <div class="session-pill"><i class="fa-solid fa-floppy-disk"></i> บันทึกรอบนี้: <span id="session-count">0</span> รายการ</div>
+        <div id="assess-progress" class="assess-progress">
+          <div class="ap-top"><span><i class="fa-solid fa-list-check me-1"></i> ประเมินให้ครบทุกข้อ</span><span id="ap-count">0/0</span></div>
+          <div class="ap-bar"><div id="ap-fill" class="ap-fill"></div></div>
+          <div id="ap-status" class="ap-status">ต้องประเมินให้ครบทุกคำ/สระในทุกหัวข้อ</div>
+        </div>
       </div>
       <div class="rail-section-title">เมนูแบบฝึกหัด</div>
       <div id="topic-menu"></div>
@@ -3170,13 +3208,18 @@
     const vp = document.getElementById('video-player'); if (vp) vp.src = "";
     const vv = document.getElementById('vowel-video');  if (vv) vv.src = "";
   }
-  function goHome(){ stopAllAudio(); clearTrainingMedia(); showView(currentNurse ? 'view-dashboard' : 'view-landing'); }
+  function goHome(){
+    const tv = document.getElementById('view-training');
+    if (tv && !tv.classList.contains('d-none-h') && !confirmLeaveTraining()) return;   // อยู่ในห้องฝึก → บังคับประเมินให้ครบก่อน
+    stopAllAudio(); clearTrainingMedia(); showView(currentNurse ? 'view-dashboard' : 'view-landing');
+  }
 
   function enterTrainingById(id, returnView){ const p = patients.find(x => x.id === id); if (p && p.deceased){ alert("ผู้ป่วยรายนี้ถูกทำเครื่องหมายว่าเสียชีวิต จึงเข้าห้องฝึกไม่ได้"); return; } if (p) enterTraining(p, returnView); }
   function enterTraining(patient, returnView){
     currentPatient = normalizePatient(patient);
     trainingReturnView = returnView || (currentNurse ? 'view-dashboard' : 'view-landing');
     sessionCount = 0;
+    sessionAssessed = new Set();   // เริ่มนับการประเมินให้ครบใหม่ทุกครั้งที่เข้าห้องฝึก
     document.getElementById('session-count').innerText = 0;
     document.getElementById('patient-display').innerText = currentPatient.name + (currentPatient.HN ? " (" + currentPatient.HN + ")" : "");
     const dxEl = document.getElementById('patient-dx');
@@ -3191,7 +3234,16 @@
   // เผื่อโค้ดเดิมเรียก startTraining / goDashboard
   function startTraining(patientId){ enterTrainingById(patientId, 'view-dashboard'); }
   function goDashboard(){ goBack(); }
+  // แจ้งเตือนถ้ายังประเมินไม่ครบทุกข้อ — คืน true ถ้าให้ออกได้
+  function confirmLeaveTraining(){
+    const miss = missingItems();
+    if (!miss.length) return true;
+    const preview = miss.slice(0,12).map(m => '• ' + m.label).join('\n') + (miss.length>12 ? '\n…และอีก ' + (miss.length-12) + ' รายการ' : '');
+    return confirm('⚠️ ยังประเมินไม่ครบทุกข้อ (เหลืออีก ' + miss.length + ' รายการ)\n\n' + preview + '\n\nต้องประเมินให้ครบทุกคำ/สระในทุกหัวข้อ\nยืนยันออกจากห้องฝึกโดยยังไม่ครบหรือไม่?');
+  }
+
   function goBack(){
+    if (!confirmLeaveTraining()) return;
     stopAllAudio(); clearTrainingMedia();
     showView(trainingReturnView);
     if (trainingReturnView === 'view-dashboard'){ renderPatients(); updateDashboardCounts(); }
@@ -3201,6 +3253,62 @@
   /* ============================================================================
      หัวข้อฝึก
      ============================================================================ */
+  /* ============================================================================
+     บังคับประเมินให้ครบ "ทุกคำ/สระในทุกหัวข้อ" ต่อ 1 รอบการฝึก
+     ============================================================================ */
+  let sessionAssessed = new Set();   // คีย์รายการที่ประเมินแล้วในรอบนี้ = "topicNum::คำ"
+
+  function itemKey(topicNum, word){ return topicNum + '::' + (word || ''); }
+
+  // รายการที่ต้องประเมินให้ครบ (สร้างจาก topicsData): หัวข้อไม่มีคำ = 1 รายการ, หัวข้อมีคำ = ทุกคำ
+  function requiredItems(){
+    const items = [];
+    Object.keys(topicsData).forEach(num => {
+      const t = topicsData[num];
+      const n = Number(num);
+      const short = t.title.replace(/^\d+\.\s*/,'');
+      if (t.words && t.words.length){
+        t.words.forEach(w => items.push({ key:itemKey(n,w), topicNum:n, word:w, label:short+' — '+w }));
+      } else {
+        items.push({ key:itemKey(n,''), topicNum:n, word:'', label:short });
+      }
+    });
+    return items;
+  }
+
+  function missingItems(){ return requiredItems().filter(it => !sessionAssessed.has(it.key)); }
+
+  // ทำเครื่องหมาย ✓ บนปุ่มคำที่ประเมินแล้ว (ของหัวข้อที่กำลังเปิดอยู่)
+  function markWordBadges(){
+    document.querySelectorAll('#words-grid .word-badge').forEach(b => {
+      b.classList.toggle('done', sessionAssessed.has(itemKey(currentTopicNum, b.dataset.word)));
+    });
+  }
+
+  function updateAssessmentProgress(){
+    const req = requiredItems();
+    const total = req.length;
+    let done = 0;
+    const per = {};
+    req.forEach(it => {
+      per[it.topicNum] = per[it.topicNum] || { done:0, total:0 };
+      per[it.topicNum].total++;
+      if (sessionAssessed.has(it.key)){ done++; per[it.topicNum].done++; }
+    });
+    const cEl = document.getElementById('ap-count'); if (cEl) cEl.innerText = done + '/' + total;
+    const fEl = document.getElementById('ap-fill');  if (fEl) fEl.style.width = (total ? (done/total*100) : 0) + '%';
+    const sEl = document.getElementById('ap-status');
+    if (sEl){
+      if (done >= total && total > 0){ sEl.innerHTML = '<i class="fa-solid fa-circle-check"></i> ประเมินครบทุกข้อแล้ว'; sEl.classList.add('done'); }
+      else { sEl.innerHTML = 'เหลืออีก <b>' + (total-done) + '</b> รายการ — ต้องประเมินให้ครบทุกคำ/สระในทุกหัวข้อ'; sEl.classList.remove('done'); }
+    }
+    Object.keys(per).forEach(num => {
+      const badge = document.querySelector('[data-topicprog="'+num+'"]');
+      if (badge){ const p = per[num]; badge.innerText = p.done + '/' + p.total; badge.classList.toggle('complete', p.done >= p.total); }
+    });
+    markWordBadges();
+  }
+
   function renderTopicMenu(){
     const menu = document.getElementById('topic-menu');
     menu.innerHTML = "";
@@ -3210,10 +3318,11 @@
       div.className = "topic-item" + (Number(num)===currentTopicNum ? " active" : "");
       div.dataset.num = num;
       const shortTitle = t.title.replace(/^\d+\.\s*/,'');
-      div.innerHTML = `<span class="num">${num}</span><span class="topic-copy"><span class="topic-label">${shortTitle}</span><span class="topic-kind">${t.hasAudio ? 'ฝึกเสียงพูด' : 'วิดีโอฝึกกล้ามเนื้อ'}</span></span>`;
+      div.innerHTML = `<span class="num">${num}</span><span class="topic-copy"><span class="topic-label">${shortTitle}</span><span class="topic-kind">${t.hasAudio ? 'ฝึกเสียงพูด' : 'วิดีโอฝึกกล้ามเนื้อ'}</span></span><span class="topic-progress" data-topicprog="${num}">0/0</span>`;
       div.onclick = () => switchTopic(Number(num));
       menu.appendChild(div);
     });
+    updateAssessmentProgress();
   }
 
   function switchTopic(num){
@@ -3274,6 +3383,7 @@
       videoSection.classList.remove('d-none-h');
       document.getElementById('video-player').src = data.video;
     }
+    updateAssessmentProgress();   // อัปเดตแถบคืบหน้า + ✓ บนคำที่ประเมินแล้ว
   }
 
   function buildWordGrid(words, onSelectExtra){
@@ -3599,30 +3709,46 @@
      ============================================================================ */
   function saveAssessment(){
     if (!currentPatient){ alert("ไม่พบรหัสผู้ป่วย ไม่สามารถบันทึกได้"); return; }
-    if (!selectedScore){ alert("กรุณาเลือกผลการประเมินก่อนบันทึกครับ"); return; }
 
-    const topic = currentTopicName + (selectedWord ? ` (คำที่ฝึก: ${selectedWord})` : '');
-    const note  = document.getElementById('evalNote').value;
-    const now   = new Date();
-    const record = {
-      ts: now.getTime(),
+    const data = topicsData[currentTopicNum];
+    const itemized = !!(data && data.hasAudio && ((data.words && data.words.length) || (data.wordsDetail && data.wordsDetail.length)));
+    const CAT = { 2:"ทำได้ดีเยี่ยม", 1:"ทำได้บางส่วน", 0:"ทำไม่ได้ / ปรับปรุง" };
+    const note = document.getElementById('evalNote').value;
+    const now  = new Date();
+    const base = () => ({
       when: now.toLocaleString('th-TH'),
-      patientId: currentPatient.id,
-      patientName: currentPatient.name,
-      hn: currentPatient.HN,
-      cid: currentPatient.cid || "",
-      dx: currentPatient.dx || "",
-      topic,
-      score: selectedScore,
-      scoreValue: (pendingScoreValue != null ? pendingScoreValue : (selectedScore in SCORE_VALUE ? SCORE_VALUE[selectedScore] : "")),
-      by: currentNurse || "ผู้ป่วยฝึกเอง",
-      note
-    };
+      patientId: currentPatient.id, patientName: currentPatient.name, hn: currentPatient.HN,
+      cid: currentPatient.cid || "", dx: currentPatient.dx || "",
+      by: currentNurse || "ผู้ป่วยฝึกเอง", note
+    });
 
-    // 1) บันทึกลงเครื่องเสมอ (กันข้อมูลหาย)
+    // สร้างเรคคอร์ด: หัวข้อ 4–6 = 1 เรคคอร์ดต่อ 1 คำ (คะแนนจากไมค์) · หัวข้อ 1–3 = 1 เรคคอร์ดรวม
+    let records = [];
+    if (itemized){
+      if (!spokenLog.length){ alert("ยังไม่มีคำที่ให้คะแนน — ให้ผู้ป่วยพูดตามให้ระบบฟังก่อนบันทึกครับ"); return; }
+      records = spokenLog.map((x, i) => {
+        const pts = x.level === 'good' ? 2 : x.level === 'mid' ? 1 : 0;
+        return Object.assign(base(), {
+          ts: now.getTime() + i,
+          topicNum: currentTopicNum, item: x.word,
+          topic: currentTopicName + ` (คำที่ฝึก: ${x.word})`,
+          score: CAT[pts], scoreValue: pts
+        });
+      });
+    } else {
+      if (!selectedScore){ alert("กรุณาเลือกผลการประเมินก่อนบันทึกครับ"); return; }
+      const pts = (pendingScoreValue != null ? pendingScoreValue : (selectedScore in SCORE_VALUE ? SCORE_VALUE[selectedScore] : ""));
+      records = [ Object.assign(base(), {
+        ts: now.getTime(), topicNum: currentTopicNum, item: "",
+        topic: currentTopicName, score: selectedScore, scoreValue: pts
+      }) ];
+    }
+
+    // 1) บันทึกลงเครื่องเสมอ + อัปเดตความคืบหน้า
     const hist = getHistory();
-    hist.push(record);
+    records.forEach(r => { hist.push(r); sessionAssessed.add(itemKey(currentTopicNum, r.item)); });
     saveHistoryLocal(hist);
+    updateAssessmentProgress();
 
     // 2) ส่งขึ้น Google Sheets (ถ้ามี URL)
     const btn = document.getElementById('btn-save');
@@ -3632,7 +3758,7 @@
     const finish = (cloudOk, extraMsg) => {
       btn.disabled = false;
       btn.innerHTML = '<i class="fa-solid fa-floppy-disk me-2"></i> บันทึกผลลงระบบ';
-      sessionCount++;
+      sessionCount += records.length;
       document.getElementById('session-count').innerText = sessionCount;
       clearScoreSelection();
       spokenLog = [];   // เริ่มสะสมผลการพูดรอบใหม่หลังบันทึก
@@ -3642,24 +3768,15 @@
       const cloudTxt = GOOGLE_SCRIPT_URL ? (cloudOk ? " และส่งขึ้น Google Sheets แล้ว" : " (แต่ส่งขึ้น Google Sheets ไม่สำเร็จ: " + extraMsg + ")") : "";
       if (GOOGLE_SCRIPT_URL && cloudOk) syncHistoryFromCloud();
       else refreshDataViews();
-      alert("✨ บันทึกการประเมินเรียบร้อย" + cloudTxt);
+      alert("✨ บันทึกการประเมินเรียบร้อย" + (records.length > 1 ? ` (${records.length} คำ)` : "") + cloudTxt);
     };
 
     if (GOOGLE_SCRIPT_URL){
-      jsonp({
-        action: "save",
-        patientId: record.patientId,
-        patientName: record.patientName,
-        hn: record.hn,
-        cid: record.cid,
-        dx: record.dx,
-        topic: record.topic,
-        score: record.score,
-        scoreValue: record.scoreValue,
-        by: record.by,
-        note: record.note
-      }).then(res => finish(res && res.status === "success", res ? res.message : ""))
-        .catch(err => finish(false, err.message));
+      Promise.all(records.map(r => jsonp({
+        action:"save", patientId:r.patientId, patientName:r.patientName, hn:r.hn,
+        cid:r.cid, dx:r.dx, topic:r.topic, score:r.score, scoreValue:r.scoreValue, by:r.by, note:r.note
+      }).catch(err => ({ status:"error", message:err.message }))))
+      .then(results => { const ok = results.every(x => x && x.status === "success"); finish(ok, ok ? "" : "บางรายการส่งไม่สำเร็จ"); });
     } else {
       finish(true, "");
     }
@@ -3756,6 +3873,62 @@
   function histPoints(h){
     if (h && typeof h.scoreValue === 'number'){ const v = h.scoreValue; return v > SCORE_MAX ? (v >= 67 ? 2 : v >= 34 ? 1 : 0) : v; }
     return scoreToValue(h ? h.score : "");
+  }
+
+  /* ============================================================================
+     คะแนนเฉลี่ยแต่ละหัวข้อใหญ่ (1–6)
+       - หัวข้อ 1–3 (ไม่มีข้อย่อย): เฉลี่ยจากทุกครั้งที่ประเมิน
+       - หัวข้อ 4–6 (มีข้อย่อย): เฉลี่ยจาก "คะแนนล่าสุดของแต่ละคำ/สระ/ประโยค"
+     ============================================================================ */
+  function recTopicNum(h){
+    if (h && (h.topicNum || h.topicNum === 0)) { const n = Number(h.topicNum); if (n) return n; }
+    const m = /^\s*(\d+)\./.exec((h && h.topic) || '');
+    return m ? Number(m[1]) : 0;
+  }
+  function recItem(h){
+    if (h && h.item != null && h.item !== '') return String(h.item);
+    const m = /\(\s*คำที่ฝึก\s*:\s*([^)]+)\)/.exec((h && h.topic) || '');
+    return m ? m[1].trim() : '';
+  }
+  function topicScoreAverages(hist){
+    const byTopic = {};
+    (hist || []).forEach(h => { const tn = recTopicNum(h); if (!tn) return; (byTopic[tn] = byTopic[tn] || []).push(h); });
+    const out = {};
+    for (let tn = 1; tn <= 6; tn++){
+      const recs = byTopic[tn] || [];
+      const t = topicsData[tn];
+      if (!recs.length){ out[tn] = { avg:null, n:0 }; continue; }
+      if (t && t.words && t.words.length){
+        // หัวข้อมีข้อย่อย → เอาคะแนนล่าสุดของแต่ละคำมาเฉลี่ย
+        const latest = {};
+        recs.forEach(h => { const it = recItem(h) || '(รวม)'; if (!latest[it] || h.ts > latest[it].ts) latest[it] = h; });
+        const vals = Object.keys(latest).map(k => histPoints(latest[k]));
+        out[tn] = { avg: vals.reduce((s,v)=>s+v,0)/vals.length, n: vals.length };
+      } else {
+        // หัวข้อไม่มีข้อย่อย → เฉลี่ยทุกครั้ง
+        const vals = recs.map(h => histPoints(h));
+        out[tn] = { avg: vals.reduce((s,v)=>s+v,0)/vals.length, n: recs.length };
+      }
+    }
+    return out;
+  }
+  // กราฟแท่งแนวนอน: คะแนนเฉลี่ยแต่ละหัวข้อ (0–2)
+  function topicChartHTML(hist){
+    const avgs = topicScoreAverages(hist);
+    let rows = '';
+    for (let tn = 1; tn <= 6; tn++){
+      const t = topicsData[tn]; if (!t) continue;
+      const a = avgs[tn];
+      const short = t.title.replace(/^\d+\.\s*/,'');
+      const sub = (t.words && t.words.length) ? `${a.n} ข้อย่อย` : 'ประเมินรวม';
+      if (a.avg == null){
+        rows += `<div class="tsc-row"><div class="tsc-label"><b>${tn}.</b> ${escapeHtml(short)}<small class="tsc-sub">ยังไม่มีข้อมูล</small></div><div class="tsc-barwrap"><span class="tsc-bar" style="width:0%"></span></div><div class="tsc-val text-muted">—</div></div>`;
+      } else {
+        const c = levelInfo(a.avg).color;
+        rows += `<div class="tsc-row"><div class="tsc-label"><b>${tn}.</b> ${escapeHtml(short)}<small class="tsc-sub">${sub}</small></div><div class="tsc-barwrap"><span class="tsc-bar fill-${c}" style="width:${Math.round(a.avg/2*100)}%"></span></div><div class="tsc-val ${levelInfo(a.avg).txt}">${a.avg.toFixed(1)}<small>/2</small></div></div>`;
+      }
+    }
+    return `<div class="tsc">${rows}</div>`;
   }
 
   function openProgress(patientId){
@@ -3875,7 +4048,10 @@
         <div class="col-6 col-lg-3"><div class="prog-stat"><div class="ps-label">พัฒนาการเทียบเดือนแรก</div><div class="ps-num ${impClass}"><i class="fa-solid ${impIcon} me-1"></i>${impTxt}</div></div></div>
       </div>
 
-      <h5 class="mb-3"><i class="fa-solid fa-chart-column text-success me-2"></i> คะแนนเฉลี่ยรายเดือน (เต็ม 2)</h5>
+      <h5 class="mb-3"><i class="fa-solid fa-layer-group text-primary me-2"></i> คะแนนเฉลี่ยแต่ละหัวข้อ (เต็ม 2)</h5>
+      ${topicChartHTML(hist)}
+
+      <h5 class="mt-4 mb-3"><i class="fa-solid fa-chart-column text-success me-2"></i> คะแนนเฉลี่ยรายเดือน (เต็ม 2)</h5>
       ${chart}
 
       <h5 class="mt-4 mb-3"><i class="fa-solid fa-wave-square text-primary me-2"></i> ผลประเมินย้อนหลังรายครั้ง (ล่าสุด ${recent.length} ครั้ง)</h5>
@@ -3945,6 +4121,8 @@
       renderOverview(good, mid, bad, total, total ? sum / total : 0);
       renderTrend();
       renderFollowup();
+      const tsc = document.getElementById('topic-scores');
+      if (tsc && typeof topicChartHTML === 'function') tsc.innerHTML = hist.length ? topicChartHTML(hist) : '<div class="trend-empty">ยังไม่มีข้อมูลการประเมิน</div>';
     }
 
     /* ---- กราฟแนวโน้มคะแนนเฉลี่ย รายสัปดาห์/รายเดือน (เส้น+พื้นที่ไล่สี) ---- */
