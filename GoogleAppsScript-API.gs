@@ -24,7 +24,7 @@ var ASSESS_SHEET  = "ข้อมูลการประเมิน";
 var PATIENT_SHEET = "รายชื่อผู้ป่วย";
 
 var ASSESS_HEADERS  = ["วัน-เวลา","รหัสผู้ป่วย","ชื่อผู้ป่วย","HN","CID","การวินิจฉัย (Dx)","หัวข้อการฝึก","ผลการประเมิน","คะแนน (0-2)","ผู้บันทึก","หมายเหตุ"];
-var PATIENT_HEADERS = ["รหัส","ชื่อ-สกุล","อายุ","HN","CID","การวินิจฉัย (Dx)"];
+var PATIENT_HEADERS = ["รหัส","ชื่อ-สกุล","อายุ","HN","CID","การวินิจฉัย (Dx)","สถานะ","วันที่เสียชีวิต"];
 
 // ผู้ป่วยเริ่มต้น (ใช้ seed ชีตครั้งแรกเท่านั้น)
 var SEED_PATIENTS = [
@@ -89,7 +89,7 @@ function ensurePatientSheet_() {
     sheet.getRange(1, 1, 1, PATIENT_HEADERS.length).setFontWeight("bold");
     sheet.getRange("A:A").setNumberFormat("@");   // รหัสเป็นข้อความ
     sheet.getRange("E:E").setNumberFormat("@");   // CID เป็นข้อความ
-    SEED_PATIENTS.forEach(function(p){ sheet.appendRow([p.id, p.name, p.age, p.HN, p.cid, p.dx]); });
+    SEED_PATIENTS.forEach(function(p){ sheet.appendRow([p.id, p.name, p.age, p.HN, p.cid, p.dx, "", ""]); });
   }
   return sheet;
 }
@@ -101,7 +101,9 @@ function getPatients_() {
   for (var i = 1; i < values.length; i++) {
     var r = values[i];
     if (!r[0] && !r[1]) continue;
-    out.push({ id:String(r[0]), name:String(r[1]), age:r[2], HN:String(r[3]), cid:String(r[4]), dx:String(r[5]) });
+    var st = String(r[6]||"").trim();
+    out.push({ id:String(r[0]), name:String(r[1]), age:r[2], HN:String(r[3]), cid:String(r[4]), dx:String(r[5]),
+               deceased:(st==="เสียชีวิต" || st==="1" || st.toLowerCase()==="true"), deceasedDate:String(r[7]||"") });
   }
   return out;
 }
@@ -109,7 +111,7 @@ function getPatients_() {
 function savePatient_(p) {
   var sheet = ensurePatientSheet_();
   var values = sheet.getDataRange().getValues();
-  var row = [String(p.id||""), p.name||"", p.age||"", p.hn||"", String(p.cid||""), p.dx||""];
+  var row = [String(p.id||""), p.name||"", p.age||"", p.hn||"", String(p.cid||""), p.dx||"", (p.deceased?"เสียชีวิต":""), (p.deceasedDate||"")];
   var found = -1;
   for (var i = 1; i < values.length; i++) {
     if (String(values[i][0]) === String(p.id)) { found = i + 1; break; }
