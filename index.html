@@ -3400,7 +3400,7 @@
   // คะแนนของคำ (0/1/2): ใช้ผลรอบนี้จากไมค์ (spokenLog) ก่อน ถ้าไม่มีใช้ล่าสุดจากประวัติ
   function wordPoints(word){
     const s = spokenLog.find(x => x.word === word);
-    if (s) return s.level === 'good' ? 2 : s.level === 'mid' ? 1 : 0;
+    if (s) return s.said ? 1 : 0;
     if (currentPatient){
       const recs = getHistory().filter(h => h.patientId === currentPatient.id && recTopicNum(h) === currentTopicNum && recItem(h) === word);
       if (recs.length){ recs.sort((a,b) => a.ts - b.ts); return histPoints(recs[recs.length-1]); }
@@ -3414,8 +3414,8 @@
       let sc = b.querySelector('.wb-score');
       if (!sc){ sc = document.createElement('span'); b.appendChild(sc); }
       const p = wordPoints(w);
-      sc.className = 'wb-score ' + (p == null ? 'wb-none' : p >= 2 ? 'wb-good' : p >= 1 ? 'wb-mid' : 'wb-bad');
-      sc.textContent = p == null ? '–' : (p >= 2 ? '✅ ' : p >= 1 ? '⚠️ ' : '❌ ') + p;
+      sc.className = 'wb-score ' + (p == null ? 'wb-none' : p >= 1 ? 'wb-good' : 'wb-bad');
+      sc.textContent = p == null ? '–' : p >= 1 ? '✅ พูดได้' : '❌ พูดไม่ได้';
     });
   }
 
@@ -3499,12 +3499,21 @@
   /* ============================================================================
      เสียงต้นแบบ (Text-to-Speech)
      ============================================================================ */
-  function warmUpVoices(){ try { window.speechSynthesis.getVoices(); } catch(e){} }
-
-  function pickThaiVoice(){
-    const voices = window.speechSynthesis.getVoices() || [];
-    return voices.find(v => v.lang && v.lang.toLowerCase().startsWith('th')) || null;
+  let _thaiVoice = null;
+  function loadVoices(){
+    try {
+      const voices = window.speechSynthesis.getVoices() || [];
+      const th = voices.filter(v => (v.lang || '').toLowerCase().replace('_','-').startsWith('th'));
+      // เลือกเสียงคนไทยที่เป็นธรรมชาติก่อน (ถ้ามีในเครื่อง)
+      const prefer = ['google','kanya','premwadee','niwat','pattara','achara','narisa','somsi','thai'];
+      _thaiVoice = th.find(v => prefer.some(p => (v.name || '').toLowerCase().includes(p))) || th[0] || null;
+    } catch(e){}
   }
+  function warmUpVoices(){
+    loadVoices();
+    try { if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = loadVoices; } catch(e){}
+  }
+  function pickThaiVoice(){ if (!_thaiVoice) loadVoices(); return _thaiVoice; }
 
   function speak(text, rate){
     if (!text || !('speechSynthesis' in window)) return;
@@ -3657,55 +3666,41 @@
       });
     });
 
-    const accuracyPercent = Math.min(100, Math.round(bestScore * 100));   // คะแนนความแม่นยำ 0–100
-    const isExact = exactHit || bestScore >= 0.9;
-    const isClose = (!isExact && bestScore >= 0.5);
-    const level = isExact ? 'good' : isClose ? 'mid' : 'bad';
+    // ตัดสินแบบ "คำละ 1 คะแนน": พูดได้ = 1, พูดไม่ได้ = 0
+    const said = exactHit || bestScore >= 0.5;
 
-    // กล่องผล + เสียงตอบรับ (ผลของคำที่พูดล่าสุด)
-    if (isExact){
+    if (said){
       box.className = "result-box result-good";
-      box.innerHTML = `🎯 เยี่ยมมาก! ออกเสียง "${target}" ได้ถูกต้องชัดเจน &nbsp;<span class="acc-chip">คะแนน ${accuracyPercent}/100</span>`;
-      speak("เยี่ยมมากครับ", 1);
-    } else if (isClose){
-      box.className = "result-box result-mid";
-      box.innerHTML = `⚠️ ใกล้เคียงมาก &nbsp;<span class="acc-chip">คะแนน ${accuracyPercent}/100</span><br>ลองอีกครั้งนะครับ`;
-      speak("เกือบถูกแล้วครับ ลองอีกครั้ง", 1);
+      box.innerHTML = `✅ พูดได้! คำว่า "${target}" — ได้ <b>1 คะแนน</b>`;
+      speak("เก่งมากครับ", 1);
     } else {
       box.className = "result-box result-bad";
-      box.innerHTML = `❌ ยังไม่ตรง ระบบได้ยินเป็น "${spoken}" &nbsp;<span class="acc-chip">คะแนน ${accuracyPercent}/100</span>`;
-      speak("ลองใหม่อีกครั้งนะครับ", 1);
+      box.innerHTML = `❌ ยังพูดไม่ได้ — ระบบได้ยินเป็น "${spoken}" (0 คะแนน) ลองอีกครั้งนะครับ`;
+      speak("ลองอีกครั้งนะครับ", 1);
     }
 
-    // ตรวจความแม่นยำและให้คะแนนทุกคำที่พูด แล้วสรุปลงช่อง "บันทึกเพิ่มเติมจากนักบำบัด" ให้ครบ
-    logSpokenResult(target, spoken, accuracyPercent, level);
+    logSpokenResult(target, spoken, said);
   }
 
   /* บันทึกผลการพูดสะสม (1 บรรทัดต่อ 1 คำ, พูดซ้ำ = อัปเดตครั้งล่าสุด) แล้วให้คะแนนเฉลี่ยตามการพูดทั้งหมด */
-  function logSpokenResult(word, heard, percent, level){
+  function logSpokenResult(word, heard, said){
     const idx = spokenLog.findIndex(x => x.word === word);
-    const entry = { word, heard, percent, level };
+    const entry = { word, heard, said:!!said };
     if (idx >= 0) spokenLog[idx] = entry; else spokenLog.push(entry);
     renderSpokenNote();
     refreshWordScores();   // อัปเดตคะแนนบนปุ่มคำทันทีที่พูด
   }
 
+  // สรุปว่าคำไหน "พูดได้ / พูดไม่ได้" ลงช่องบันทึก
   function renderSpokenNote(){
     const noteEl = document.getElementById('evalNote');
     if (!spokenLog.length){ noteEl.value = ""; return; }
-    const icon  = { good:"✅", mid:"⚠️", bad:"❌" };
-    const label = { good:"ถูกต้องชัดเจน", mid:"ใกล้เคียง", bad:"ยังไม่ชัด" };
-    const avgAcc = Math.round(spokenLog.reduce((s,x) => s + x.percent, 0) / spokenLog.length);   // ความแม่นยำเฉลี่ย %
-    const lines = spokenLog.map(x => {
-      const heardTxt = (x.level === 'good' && x.percent >= 100) ? "" : ` · ได้ยิน: "${x.heard || '-'}"`;
-      return `${icon[x.level]} "${x.word}" → แม่นยำ ${x.percent}% (${label[x.level]})${heardTxt}`;
-    });
-    // แปลงความแม่นยำเฉลี่ยเป็นผลประเมิน 0/1/2 : ≥67%→2, ≥34%→1, อื่น ๆ →0
-    const pts = avgAcc >= 67 ? 2 : avgAcc >= 34 ? 1 : 0;
-    noteEl.value = `[ระบบอัตโนมัติ] ฝึกพูด ${spokenLog.length} คำ · ความแม่นยำเฉลี่ย ${avgAcc}% → ผลประเมิน ${pts}/2\n` + lines.join("\n");
-    // ให้คะแนนรวมตามการพูดให้ครบทุกคำ (ตั้ง pendingScoreValue หลัง autoScore เพราะ autoScore จะรีเซ็ตก่อน)
-    autoScore(pts >= 2 ? 'good' : pts >= 1 ? 'mid' : 'bad');
-    pendingScoreValue = pts;
+    const okW = spokenLog.filter(x => x.said).map(x => x.word);
+    const noW = spokenLog.filter(x => !x.said).map(x => x.word);
+    noteEl.value =
+      `[สรุปการฝึกพูด] พูดได้ ${okW.length} คำ · พูดไม่ได้ ${noW.length} คำ (คำละ 1 คะแนน)\n`
+      + (okW.length ? `✅ พูดได้: ${okW.join(', ')}\n` : '')
+      + (noW.length ? `❌ พูดไม่ได้: ${noW.join(', ')}` : '');
   }
 
   function resetEval(){
@@ -3763,12 +3758,12 @@
     if (itemized){
       if (!spokenLog.length){ alert("ยังไม่มีคำที่ให้คะแนน — ให้ผู้ป่วยพูดตามให้ระบบฟังก่อนบันทึกครับ"); return; }
       records = spokenLog.map((x, i) => {
-        const pts = x.level === 'good' ? 2 : x.level === 'mid' ? 1 : 0;
+        const pts = x.said ? 1 : 0;   // คำละ 1 คะแนน: พูดได้ = 1, พูดไม่ได้ = 0
         return Object.assign(base(), {
           ts: now.getTime() + i,
           topicNum: currentTopicNum, item: x.word,
           topic: currentTopicName + ` (คำที่ฝึก: ${x.word})`,
-          score: CAT[pts], scoreValue: pts
+          score: pts ? "พูดได้" : "พูดไม่ได้", scoreValue: pts
         });
       });
     } else {
@@ -3949,7 +3944,7 @@
     }
     return out;
   }
-  // กราฟแท่งแนวนอน: คะแนนเฉลี่ยแต่ละหัวข้อ (0–2)
+  // กราฟแท่งแนวนอน: หัวข้อ 4–6 = สัดส่วนคำที่พูดได้ (คำละ 1 คะแนน) · หัวข้อ 1–3 = คะแนนเฉลี่ย /2
   function topicChartHTML(hist){
     const avgs = topicScoreAverages(hist);
     let rows = '';
@@ -3957,12 +3952,18 @@
       const t = topicsData[tn]; if (!t) continue;
       const a = avgs[tn];
       const short = t.title.replace(/^\d+\.\s*/,'');
-      const sub = (t.words && t.words.length) ? `${a.n} ข้อย่อย` : 'ประเมินรวม';
+      const hasWords = !!(t.words && t.words.length);
       if (a.avg == null){
         rows += `<div class="tsc-row"><div class="tsc-label"><b>${tn}.</b> ${escapeHtml(short)}<small class="tsc-sub">ยังไม่มีข้อมูล</small></div><div class="tsc-barwrap"><span class="tsc-bar" style="width:0%"></span></div><div class="tsc-val text-muted">—</div></div>`;
+      } else if (hasWords){
+        const pct = Math.round(a.avg * 100);          // a.avg = สัดส่วนพูดได้ 0–1
+        const said = Math.round(a.avg * a.n);
+        const c = pct >= 67 ? 'good' : pct >= 34 ? 'mid' : 'bad';
+        const tcls = pct >= 67 ? 'text-success' : pct >= 34 ? 'text-warning' : 'text-danger';
+        rows += `<div class="tsc-row"><div class="tsc-label"><b>${tn}.</b> ${escapeHtml(short)}<small class="tsc-sub">พูดได้ ${said}/${a.n} คำ</small></div><div class="tsc-barwrap"><span class="tsc-bar fill-${c}" style="width:${pct}%"></span></div><div class="tsc-val ${tcls}">${pct}%</div></div>`;
       } else {
         const c = levelInfo(a.avg).color;
-        rows += `<div class="tsc-row"><div class="tsc-label"><b>${tn}.</b> ${escapeHtml(short)}<small class="tsc-sub">${sub}</small></div><div class="tsc-barwrap"><span class="tsc-bar fill-${c}" style="width:${Math.round(a.avg/2*100)}%"></span></div><div class="tsc-val ${levelInfo(a.avg).txt}">${a.avg.toFixed(1)}<small>/2</small></div></div>`;
+        rows += `<div class="tsc-row"><div class="tsc-label"><b>${tn}.</b> ${escapeHtml(short)}<small class="tsc-sub">ประเมินรวม</small></div><div class="tsc-barwrap"><span class="tsc-bar fill-${c}" style="width:${Math.round(a.avg/2*100)}%"></span></div><div class="tsc-val ${levelInfo(a.avg).txt}">${a.avg.toFixed(1)}<small>/2</small></div></div>`;
       }
     }
     return `<div class="tsc">${rows}</div>`;
