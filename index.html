@@ -3857,54 +3857,54 @@
      - ใช้เสียงหลัก (primary transcript) เป็นตัวตัดสิน กัน ASR เดาต่อเป็นคำเต็ม
      ---------------------------------------------------------------------------- */
   function matchSyllable(remaining, syl){
-    // remaining, syl : normalize แล้ว → คืนจำนวนตัวอักษรที่กินไป ถ้าจับพยางค์นี้ได้, ไม่ได้ = -1
+    // remaining, syl : normalize แล้ว → คืนจำนวนตัวอักษรที่กินไป ถ้าพยางค์นี้ตรงที่ตำแหน่งนี้, ไม่ตรง = -1
     if (!remaining || !syl) return -1;
     if (remaining.startsWith(syl)) return syl.length;
-    if (syl.length >= 2 && similarity(remaining.slice(0, syl.length), syl) >= 0.6) return syl.length;
-    for (let sh = 1; sh <= 2; sh++){                       // เผื่อ ASR แทรก/เลื่อน 1–2 ตัวอักษร
-      if (remaining.slice(sh).startsWith(syl)) return sh + syl.length;
-      if (syl.length >= 2 && similarity(remaining.slice(sh, sh + syl.length), syl) >= 0.75) return sh + syl.length;
-    }
+    if (syl.length >= 2 && similarity(remaining.slice(0, syl.length), syl) >= 0.7) return syl.length;  // ยอมเพี้ยนเล็กน้อยเฉพาะพยางค์ยาว
     return -1;
   }
-  // จับพยางค์ทีละพยางค์ "ตามลำดับ" จากเสียงที่ได้ยิน — คืน flags ต่อพยางค์ (true = พูดได้)
+  // จับพยางค์ทีละพยางค์ "ตามลำดับ" จากเสียงที่ได้ยิน — คืน flags ต่อพยางค์ (true = พูดได้จริง)
   function alignSyllables(heard, nsyl){
     const N = nsyl.length;
     const flags = new Array(N).fill(false);
     let cursor = 0;
     for (let i = 0; i < N; i++){
       const s = nsyl[i];
-      const limit = Math.min(heard.length - 1, cursor + s.length + 2);   // ค้นในหน้าต่างแคบ ๆ กันจับมั่ว
-      for (let pos = cursor; pos <= limit; pos++){
+      for (let pos = cursor; pos < heard.length; pos++){    // ค้นตามลำดับจนจบข้อความ (รองรับคำเกินหน้า/แทรก)
         const consumed = matchSyllable(heard.slice(pos), s);
         if (consumed >= 0){ flags[i] = true; cursor = pos + consumed; break; }
       }
-      // ถ้าพยางค์นี้ไม่เจอ (ผู้ป่วยข้าม/ออกเสียงไม่ชัด) → ไม่เลื่อน cursor เผื่อไปเจอพยางค์ถัดไป
+      // ถ้าพยางค์นี้ไม่เจอ → ไม่เลื่อน cursor เผื่อไปเจอพยางค์ถัดไป (ผู้ป่วยข้าม/ออกเสียงไม่ชัด)
     }
     return flags;
   }
+  function countFlags(flags){ return flags.reduce((n, f) => n + (f ? 1 : 0), 0); }
+
   function scoreSyllablesStrict(target, candidates){
     const syl  = wordSyllables(target);
     const maxN = syl.length;
     const nsyl = syl.map(normalize);
-    const fullN = nsyl.join('');
     const forms = acceptableForms(target);                 // normalize แล้ว (คำต้นแบบ + คำพ้อง)
     const all = (candidates && candidates.length ? candidates : []).map(normalize).filter(Boolean);
     const primary = all[0] || '';
+    const allTrue = () => syl.map(() => true);
     if (!primary) return { got: 0, maxN, flags: syl.map(() => false), heardBest: '' };
 
-    // (1) เสียงหลักตรงคำเต็ม/คำพ้อง → ครบทุกพยางค์
-    //     ยกเว้น "รูปย่อที่เป็นต้นคำ" (เช่น มกรา ↔ มกราคม, พฤหัส ↔ วันพฤหัสบดี) ที่ต้องนับพยางค์จริง
+    // (1) เสียงหลักตรงคำเต็ม/คำพ้อง → แยกว่าเป็น "คำเต็ม" หรือ "รูปย่อ/พูดบางส่วน" ด้วยการเทียบพยางค์
     const exact = forms.find(f => f && f === primary);
     if (exact){
-      const isShortPrefix = exact.length < fullN.length && fullN.startsWith(exact);
-      if (!isShortPrefix) return { got: maxN, maxN, flags: syl.map(() => true), heardBest: primary };
+      const flags = alignSyllables(exact, nsyl);
+      const aligned = countFlags(flags);
+      // aligned === 0    → คำพ้องเชิงสัญลักษณ์ (เลข "2", "ม.ค.") = แทนคำเต็ม → ครบทุกพยางค์
+      // aligned === maxN → ออกเสียงครบทุกพยางค์ → ครบ
+      if (aligned === 0 || aligned === maxN) return { got: maxN, maxN, flags: allTrue(), heardBest: primary };
+      // aligned บางส่วน → รูปย่อ/พูดไม่ครบ (เช่น มกรา=3/4, พฤหัส=3/6) → นับเฉพาะพยางค์ที่ออกเสียงจริง
+      return { got: aligned, maxN, flags, heardBest: primary };
     }
 
     // (2) นับเฉพาะพยางค์ที่พูดได้จริง — จับทีละพยางค์ตามลำดับจากเสียงหลัก (ไม่ให้เครดิตเต็มคำจากความคล้าย)
     const flags = alignSyllables(primary, nsyl);
-    const got = flags.reduce((n, f) => n + (f ? 1 : 0), 0);
-    return { got, maxN, flags, heardBest: primary };
+    return { got: countFlags(flags), maxN, flags, heardBest: primary };
   }
 
   function evaluateSpokenText(spoken, alts){
