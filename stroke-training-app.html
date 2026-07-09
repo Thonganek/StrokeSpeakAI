@@ -1,0 +1,3622 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StrokeSpeak AI Thawatburi Hospital | ระบบฝึกพูดและติดตามการฟื้นฟูผู้ป่วยโรคหลอดเลือดสมอง</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* ============================================================
+       Premium clinical interface: readable, calm, and touch-friendly
+       ============================================================ */
+    :root {
+      --fs-base: 20px;
+      --primary: #2563eb;
+      --primary-dark: #0b2d6b;
+      --teal: #0ea5e9;
+      --gold: #60a5fa;
+      --good: #0284c7;
+      --mid:  #d97706;
+      --bad:  #dc2626;
+      --ink:  #152238;
+      --muted:#5d6b82;
+      --line: #d7e3f5;
+      --line-strong: #b8cff0;
+      --surface:#ffffff;
+      --surface-soft:#f3f8ff;
+      --bg:   #edf6ff;
+      --radius-card: 8px;
+      --radius-control: 10px;
+      --shadow-sm: 0 6px 18px rgba(11,45,107,.08);
+      --shadow-md: 0 14px 34px rgba(11,45,107,.12);
+      --shadow-lg: 0 24px 56px rgba(11,45,107,.16);
+    }
+
+    * { box-sizing:border-box; -webkit-tap-highlight-color: rgba(14,165,233,.16); }
+    html { scroll-behavior:smooth; }
+    body {
+      min-height:100vh;
+      font-family:'Sarabun', sans-serif;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.78), rgba(255,255,255,.93)),
+        linear-gradient(135deg, #e8f3ff 0%, #f7fbff 45%, #dff2ff 100%);
+      color:var(--ink);
+      font-size:var(--fs-base);
+      line-height:1.6;
+    }
+    body::before {
+      content:"";
+      position:fixed;
+      inset:0;
+      z-index:-1;
+      pointer-events:none;
+      background-image:
+        linear-gradient(90deg, rgba(37,99,235,.06) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(14,165,233,.055) 1px, transparent 1px);
+      background-size:64px 64px;
+      opacity:.55;
+    }
+    h1,h2,h3,h4,h5 { font-weight:800; line-height:1.25; }
+    p { color:var(--muted); }
+    .container-xxl { max-width:1480px; }
+    .text-primary { color:var(--primary)!important; }
+    .text-success { color:var(--good)!important; }
+    .text-warning { color:var(--mid)!important; }
+    .text-muted { color:var(--muted)!important; }
+
+    .navbar-custom {
+      position:sticky;
+      top:0;
+      z-index:1030;
+      color:#fff;
+      background:linear-gradient(112deg, var(--primary-dark) 0%, var(--primary) 54%, var(--teal) 100%);
+      border-bottom:1px solid rgba(255,255,255,.24);
+      box-shadow:0 16px 36px rgba(11,45,107,.22);
+    }
+    .navbar-custom .container-xxl { min-height:74px; }
+    .brand-title {
+      display:flex;
+      align-items:center;
+      white-space:normal;
+      font-size:1.45rem;
+      line-height:1.35;
+    }
+    .brand-title i {
+      width:46px;
+      height:46px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      border-radius:12px;
+      background:rgba(255,255,255,.16);
+      color:#fff;
+    }
+    .badge-pill {
+      border-radius:999px;
+      border:1px solid rgba(37,99,235,.16);
+      box-shadow:0 8px 18px rgba(11,45,107,.12);
+      line-height:1.3;
+    }
+
+    .card-soft,
+    .practice-panel {
+      background:rgba(255,255,255,.94);
+      border:1px solid rgba(199,208,221,.82);
+      border-radius:var(--radius-card);
+      box-shadow:var(--shadow-sm);
+      backdrop-filter:saturate(130%) blur(10px);
+    }
+    .card-soft { overflow:hidden; }
+    .practice-panel { padding:28px; box-shadow:var(--shadow-md); }
+    .stat-card {
+      position:relative;
+      min-height:154px;
+      transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    }
+    .stat-card::before {
+      content:"";
+      position:absolute;
+      left:0;
+      right:0;
+      top:0;
+      height:5px;
+      background:linear-gradient(90deg, var(--gold), var(--teal), var(--primary));
+    }
+    .stat-card:hover { transform:translateY(-2px); box-shadow:var(--shadow-md); border-color:var(--line-strong); }
+    .stat-num { font-size:2.7rem; font-weight:800; line-height:1; margin-top:4px; }
+
+    .btn {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:.38rem;
+      border-radius:var(--radius-control);
+      font-weight:800;
+      line-height:1.25;
+      white-space:normal;
+      box-shadow:0 7px 16px rgba(23,32,47,.08);
+      transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease, background-color .16s ease;
+    }
+    .btn:hover { transform:translateY(-1px); box-shadow:0 12px 24px rgba(23,32,47,.13); }
+    .btn:active { transform:translateY(0); }
+    .btn:focus-visible { outline:4px solid rgba(96,165,250,.5); outline-offset:3px; box-shadow:none; }
+    .btn-xl { min-height:62px; padding:15px 24px; font-size:1.2rem; }
+    .btn-huge { width:100%; min-height:84px; padding:21px 24px; font-size:1.45rem; }
+    .btn-primary {
+      border-color:transparent;
+      background:linear-gradient(135deg, var(--primary) 0%, var(--teal) 100%);
+      color:#fff;
+    }
+    .btn-primary:hover,
+    .btn-primary:focus { background:linear-gradient(135deg, #1d4ed8 0%, #0369a1 100%); color:#fff; }
+    .btn-success { border-color:transparent; background:linear-gradient(135deg, var(--good), #38bdf8); color:#fff; }
+    .btn-danger { border-color:transparent; background:linear-gradient(135deg, var(--bad), #9f2b4a); color:#fff; }
+    .btn-outline-primary { border-color:rgba(37,99,235,.42); color:var(--primary); background:linear-gradient(180deg, #fff, #f7fbff); }
+    .btn-outline-primary:hover { border-color:var(--primary); background:var(--primary); color:#fff; }
+    .btn-outline-secondary { border-color:rgba(102,112,133,.36); color:#435063; background:#fff; }
+    .btn-outline-secondary:hover,
+    .btn-outline-secondary.active { border-color:var(--primary); background:#eaf2ff; color:var(--primary); }
+    .btn-outline-danger { border-color:rgba(197,48,48,.4); color:var(--bad); background:#fff; }
+    .btn-outline-danger:hover { background:var(--bad); border-color:var(--bad); color:#fff; }
+    .btn-light { background:#f6f8fb; border-color:var(--line); color:var(--ink); }
+    .btn:disabled { transform:none; box-shadow:none; opacity:.72; }
+
+    .search-input {
+      border-radius:999px;
+      padding:15px 22px;
+      border:2px solid var(--line);
+      background:#fff;
+      color:var(--ink);
+      font-size:1.12rem;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.7);
+    }
+    .search-input:focus {
+      border-color:var(--teal);
+      box-shadow:0 0 0 4px rgba(14,165,233,.14);
+    }
+    .input-group-text {
+      border:2px solid var(--line);
+      color:var(--muted)!important;
+      background:#fff!important;
+    }
+
+    .patient-card {
+      position:relative;
+      background:#fff;
+      border:1px solid var(--line);
+      border-left:5px solid transparent;
+      border-radius:var(--radius-card);
+      padding:20px 22px;
+      margin-bottom:14px;
+      transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    }
+    .patient-row {
+      display:grid;
+      grid-template-columns:64px minmax(220px, 1fr) auto auto;
+      align-items:center;
+      gap:16px;
+    }
+    .patient-name {
+      color:#0b2d6b;
+      font-size:1.25rem;
+      font-weight:800;
+      line-height:1.25;
+    }
+    .patient-meta {
+      display:flex;
+      align-items:center;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:5px;
+      color:var(--muted);
+      font-weight:700;
+    }
+    .patient-actions {
+      display:flex;
+      justify-content:flex-end;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .patient-status {
+      display:flex;
+      justify-content:flex-end;
+    }
+    .patient-card:hover {
+      transform:translateY(-2px);
+      border-color:rgba(37,99,235,.38);
+      border-left-color:var(--gold);
+      box-shadow:var(--shadow-md);
+    }
+    .avatar-icon {
+      width:60px;
+      height:60px;
+      border-radius:14px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex:0 0 60px;
+      color:#fff;
+      background:linear-gradient(135deg, var(--primary), var(--teal));
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.3), 0 10px 18px rgba(37,99,235,.22);
+      font-weight:800;
+      font-size:1.52rem;
+    }
+    .hn-chip {
+      display:inline-flex;
+      align-items:center;
+      min-height:32px;
+      padding:3px 12px;
+      border:1px solid #d4e5fa;
+      border-radius:999px;
+      background:#f2f8ff;
+      color:#24456f;
+      font-weight:800;
+    }
+    .status-wait,
+    .status-done {
+      display:inline-flex;
+      align-items:center;
+      min-height:40px;
+      padding:7px 16px;
+      border-radius:999px;
+      font-weight:800;
+      border:1px solid transparent;
+      white-space:nowrap;
+    }
+    .status-wait { background:#eff6ff; color:#1d4ed8; border-color:#bfdbfe; }
+    .status-done { background:#e0f2fe; color:#075985; border-color:#7dd3fc; }
+
+    .topic-item {
+      display:flex;
+      align-items:center;
+      gap:14px;
+      width:100%;
+      min-height:74px;
+      padding:15px 16px;
+      margin-bottom:10px;
+      border:1px solid var(--line);
+      border-radius:var(--radius-card);
+      background:#fff;
+      color:var(--ink);
+      cursor:pointer;
+      font-size:1.08rem;
+      font-weight:800;
+      transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease, background-color .16s ease;
+    }
+    .topic-copy {
+      display:grid;
+      gap:2px;
+      min-width:0;
+    }
+    .topic-label {
+      font-size:1rem;
+      line-height:1.25;
+    }
+    .topic-kind {
+      color:var(--muted);
+      font-size:.8rem;
+      font-weight:800;
+    }
+    .topic-item.active .topic-kind {
+      color:#dbeafe;
+    }
+    .topic-item .num {
+      width:42px;
+      height:42px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex:0 0 42px;
+      border-radius:10px;
+      background:#eff6ff;
+      color:var(--primary);
+      font-weight:800;
+      box-shadow:inset 0 0 0 1px rgba(37,99,235,.08);
+    }
+    .topic-item:hover { transform:translateY(-1px); border-color:rgba(37,99,235,.38); box-shadow:var(--shadow-sm); }
+    .topic-item.active {
+      border-color:transparent;
+      background:linear-gradient(135deg, var(--primary-dark), var(--primary) 62%, var(--teal));
+      color:#fff;
+      box-shadow:var(--shadow-md);
+    }
+    .topic-item.active .num { background:rgba(255,255,255,.18); color:#fff; box-shadow:inset 0 0 0 1px rgba(255,255,255,.22); }
+
+    .video-container {
+      position:relative;
+      height:0;
+      overflow:hidden;
+      padding-bottom:56.25%;
+      border-radius:var(--radius-card);
+      background:#071a34;
+      box-shadow:var(--shadow-lg);
+    }
+    .video-container iframe { position:absolute; inset:0; width:100%; height:100%; }
+    .ratio { background:#071a34; }
+
+    .word-hero {
+      max-width:100%;
+      padding:12px 0 16px;
+      color:var(--primary);
+      font-size:4.8rem;
+      font-weight:800;
+      line-height:1.16;
+      overflow-wrap:anywhere;
+      text-wrap:balance;
+    }
+    @supports (-webkit-background-clip:text) {
+      .word-hero {
+        background:linear-gradient(135deg, var(--primary), var(--teal), var(--gold));
+        -webkit-background-clip:text;
+        -webkit-text-fill-color:transparent;
+      }
+    }
+
+    .word-grid {
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:center;
+      gap:12px;
+    }
+    .word-badge {
+      min-width:78px;
+      min-height:58px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:13px 22px;
+      border:2px solid var(--line);
+      border-radius:999px;
+      background:#fff;
+      color:var(--ink);
+      cursor:pointer;
+      text-align:center;
+      font-size:1.22rem;
+      font-weight:800;
+      box-shadow:0 5px 12px rgba(23,32,47,.06);
+      transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease, background-color .15s ease;
+    }
+    .word-badge:hover { transform:translateY(-1px); border-color:var(--teal); background:#e0f2fe; box-shadow:0 10px 20px rgba(14,165,233,.14); }
+    .word-badge.active {
+      border-color:var(--primary);
+      background:#eaf2ff;
+      color:var(--primary);
+      box-shadow:0 0 0 4px rgba(37,99,235,.13), 0 10px 22px rgba(37,99,235,.14);
+    }
+
+    .listening { animation:pulse 1.3s infinite; background:linear-gradient(135deg, var(--bad), #8f2340)!important; color:#fff!important; border-color:transparent!important; }
+    @keyframes pulse {
+      0%   { transform:scale(1); box-shadow:0 0 0 0 rgba(197,48,48,.46); }
+      50%  { transform:scale(1.025); box-shadow:0 0 0 14px rgba(197,48,48,0); }
+      100% { transform:scale(1); box-shadow:0 0 0 0 rgba(197,48,48,0); }
+    }
+
+    .result-box {
+      min-height:94px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      border-radius:var(--radius-card);
+      padding:18px;
+      text-align:center;
+      font-size:1.28rem;
+      font-weight:800;
+      overflow-wrap:anywhere;
+    }
+    .result-good { background:#e0f2fe; color:var(--good); border:2px solid #7dd3fc; }
+    .result-mid  { background:#fff7e7; color:var(--mid);  border:2px solid #f3d18a; }
+    .result-bad  { background:#fff0f0; color:var(--bad);  border:2px solid #f0b4b4; }
+
+    .score-grid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:14px; }
+    .score-card {
+      min-height:150px;
+      border:2px solid var(--line);
+      border-radius:var(--radius-card);
+      padding:20px 12px;
+      background:#fff;
+      cursor:pointer;
+      text-align:center;
+      color:var(--ink);
+      font-weight:800;
+      font-size:1.13rem;
+      box-shadow:0 7px 16px rgba(23,32,47,.07);
+      transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease, background-color .16s ease;
+    }
+    .score-card:hover { transform:translateY(-2px); box-shadow:var(--shadow-md); border-color:var(--line-strong); }
+    .score-card .emoji { display:block; margin-bottom:6px; font-size:2.1rem; }
+    .score-card.sel-bad  { border-color:var(--bad);  background:#fff0f0; color:var(--bad); box-shadow:0 0 0 4px rgba(197,48,48,.12); }
+    .score-card.sel-mid  { border-color:var(--mid);  background:#fff7e7; color:var(--mid); box-shadow:0 0 0 4px rgba(168,111,24,.12); }
+    .score-card.sel-good { border-color:var(--good); background:#e0f2fe; color:var(--good); box-shadow:0 0 0 4px rgba(2,132,199,.13); }
+
+    textarea.form-control,
+    .form-control {
+      border:2px solid var(--line);
+      border-radius:var(--radius-control);
+      color:var(--ink);
+      font-size:1.1rem;
+    }
+    textarea.form-control:focus,
+    .form-control:focus {
+      border-color:var(--teal);
+      box-shadow:0 0 0 4px rgba(14,165,233,.14);
+    }
+    .helper-line {
+      display:flex;
+      align-items:flex-start;
+      gap:12px;
+      border:1px solid #bfdbfe;
+      border-left:5px solid var(--teal);
+      border-radius:var(--radius-card);
+      padding:14px 16px;
+      background:linear-gradient(135deg, #eff6ff, #e0f2fe);
+      color:#1e3a8a;
+      font-weight:700;
+    }
+    .speaker-btn {
+      width:56px;
+      height:56px;
+      flex:0 0 56px;
+      border:2px solid rgba(37,99,235,.42);
+      border-radius:50%;
+      color:var(--primary);
+      background:#fff;
+      font-size:1.18rem;
+      box-shadow:0 8px 18px rgba(37,99,235,.12);
+    }
+    .speaker-btn:hover { background:var(--primary); border-color:var(--primary); color:#fff; }
+
+    .border.rounded-4.bg-light,
+    .p-3.bg-light.rounded-4 {
+      border-color:var(--line)!important;
+      border-radius:var(--radius-card)!important;
+      background:linear-gradient(180deg, #fff, var(--surface-soft))!important;
+    }
+    #speech-output { display:block; overflow-wrap:anywhere; line-height:1.35; }
+    hr { border-color:var(--line); opacity:1; }
+
+    .modal-content {
+      overflow:hidden;
+      border:1px solid rgba(199,208,221,.9);
+      border-radius:var(--radius-card)!important;
+      box-shadow:var(--shadow-lg);
+    }
+    .modal-header {
+      background:linear-gradient(135deg, #f8fbff, #eaf4ff);
+      border-bottom:1px solid var(--line);
+    }
+    .modal-footer { border-top:1px solid var(--line); background:#fafcff; }
+    .modal-scroll { max-height:70vh; overflow:auto; border:1px solid var(--line); border-radius:var(--radius-card); }
+    .table { margin-bottom:0; color:var(--ink); font-size:.98rem; }
+    .table thead th {
+      position:sticky;
+      top:0;
+      z-index:1;
+      background:#eef6ff;
+      color:#24456f;
+      border-bottom:1px solid var(--line-strong);
+      font-weight:800;
+      white-space:nowrap;
+    }
+    .table tbody tr { vertical-align:middle; }
+    .table-striped>tbody>tr:nth-of-type(odd)>* { --bs-table-bg-type:#fbfdff; }
+
+    /* ภาพประกอบคำที่กำลังฝึก (หัวข้อ 5) */
+    .word-illus {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:1.1em;
+      margin-bottom:2px;
+      font-size:5.4rem;
+      line-height:1;
+      filter:drop-shadow(0 8px 16px rgba(23,32,47,.14));
+    }
+    .word-badge { gap:8px; }
+    .word-badge .wb-emoji { font-size:1.5rem; line-height:1; }
+
+    /* หมวดหมู่คำที่จะฝึก (หัวข้อ 5) */
+    .word-group { width:100%; }
+    .word-group-title {
+      display:flex; align-items:center; gap:8px;
+      font-weight:800; font-size:1.06rem; color:var(--primary);
+      margin:16px 0 10px; padding-bottom:6px; border-bottom:2px dashed var(--line);
+    }
+    .word-group:first-child .word-group-title { margin-top:0; }
+    .word-group-items { display:flex; flex-wrap:wrap; gap:12px; }
+
+    /* ตัวเลขคะแนน 0/1/2 บนการ์ดประเมิน */
+    .score-pts { display:inline-block; min-width:34px; margin:6px 0 2px; padding:2px 10px; border-radius:10px; background:rgba(23,32,47,.07); font-size:1.5rem; font-weight:800; line-height:1.1; }
+    .score-card.sel-good .score-pts { background:rgba(18,128,92,.16); }
+    .score-card.sel-mid  .score-pts { background:rgba(168,111,24,.16); }
+    .score-card.sel-bad  .score-pts { background:rgba(197,48,48,.16); }
+
+    /* แผงติดตามเร่งด่วน (ประเมินไม่ผ่าน) */
+    #followup-panel.followup-active { border-color:#f0b4b4; box-shadow:0 0 0 3px rgba(197,48,48,.09); }
+    .followup-card { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+      padding:12px 14px; margin-bottom:10px; border:1px solid #f3d0d0; border-left:5px solid var(--bad);
+      border-radius:10px; background:#fff7f7; }
+    .followup-card:last-child { margin-bottom:0; }
+    .followup-name { font-weight:800; font-size:1.05rem; }
+
+    /* รายการผลประเมินย้อนหลังรายครั้ง */
+    .hist-badge { display:inline-block; min-width:56px; text-align:center; padding:3px 10px; border-radius:999px; font-weight:800; font-size:.9rem; }
+    .hist-good { background:#eafaf3; color:var(--good); border:1px solid #a9e3ca; }
+    .hist-mid  { background:#fff7e7; color:var(--mid);  border:1px solid #f3d18a; }
+    .hist-bad  { background:#fff0f0; color:var(--bad);  border:1px solid #f0b4b4; }
+
+    /* ความก้าวหน้ารายเดือน (Progress) */
+    .prog-stat {
+      height:100%;
+      padding:16px 18px;
+      border:1px solid var(--line);
+      border-radius:var(--radius-card);
+      background:linear-gradient(180deg, #fff, var(--surface-soft));
+      box-shadow:var(--shadow-sm);
+    }
+    .ps-label { color:var(--muted); font-weight:800; font-size:.9rem; }
+    .ps-num { font-size:1.9rem; font-weight:800; line-height:1.15; margin-top:2px; }
+    .ps-num small { font-size:1rem; font-weight:700; color:var(--muted); }
+    .ps-sub { font-weight:800; }
+    .prog-chart {
+      display:flex;
+      align-items:flex-end;
+      gap:16px;
+      padding:22px 20px;
+      border:1px solid var(--line);
+      border-radius:var(--radius-card);
+      background:#fff;
+      box-shadow:var(--shadow-sm);
+      overflow-x:auto;
+      min-height:290px;
+    }
+    .prog-col { flex:0 0 84px; display:flex; flex-direction:column; align-items:center; }
+    .prog-val { font-weight:800; margin-bottom:6px; }
+    .prog-bar { width:56px; height:180px; background:#e6f1ff; border-radius:12px 12px 6px 6px; display:flex; align-items:flex-end; overflow:hidden; }
+    .prog-bar-fill { width:100%; border-radius:12px 12px 0 0; transition:height .5s ease; box-shadow:inset 0 2px 0 rgba(255,255,255,.28); }
+    .prog-month { margin-top:9px; font-weight:800; font-size:.9rem; text-align:center; }
+    .prog-sessions { color:var(--muted); font-size:.84rem; }
+    .fill-good { background:linear-gradient(180deg, #38bdf8, var(--good)); }
+    .fill-mid  { background:linear-gradient(180deg, #c98a20, var(--mid)); }
+    .fill-bad  { background:linear-gradient(180deg, #d94b4b, var(--bad)); }
+    .prog-legend { display:flex; gap:18px; flex-wrap:wrap; color:var(--muted); font-weight:700; font-size:.94rem; }
+    .ldot { display:inline-block; width:14px; height:14px; border-radius:4px; vertical-align:middle; margin-right:4px; }
+    .mini-bar { height:14px; background:#e6f1ff; border-radius:8px; overflow:hidden; }
+    .mini-fill { height:100%; border-radius:8px; }
+
+    /* คะแนนในกล่องผลประเมิน */
+    .acc-chip { display:inline-block; padding:2px 12px; border-radius:999px; background:rgba(23,32,47,.10); font-size:.95rem; font-weight:800; }
+    /* แถบสัดส่วนผลการประเมิน (Dashboard) */
+    .dist-bar { display:flex; height:30px; border-radius:999px; overflow:hidden; background:#eef2f7; border:1px solid var(--line); }
+    .dist-seg { height:100%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:.82rem; min-width:0; transition:width .5s ease; }
+    .dist-empty { width:100%; text-align:center; color:var(--muted); font-weight:700; font-size:.9rem; line-height:30px; }
+    .dist-leg { font-weight:700; color:#475569; }
+    /* ป้ายข้อมูลย่อในการ์ดผู้ป่วย */
+    .pt-meta { margin-top:2px; }
+    .meta-chip { display:inline-flex; align-items:center; gap:6px; margin-top:7px; margin-right:7px; padding:3px 11px; border:1px solid var(--line); border-radius:999px; background:#f6f9fc; color:#475569; font-size:.86rem; font-weight:700; }
+    .stat-card .small { font-size:.82rem; }
+    @media (max-width:575px){ .stat-num { font-size:2rem; } }
+
+    /* Modern refresh layer */
+    #view-dashboard,
+    #view-training {
+      animation:pageIn .36s ease both;
+    }
+    @keyframes pageIn {
+      from { opacity:0; transform:translateY(8px); }
+      to { opacity:1; transform:translateY(0); }
+    }
+    .navbar-custom {
+      isolation:isolate;
+      overflow:hidden;
+    }
+    .navbar-custom::after {
+      content:"";
+      position:absolute;
+      inset:0;
+      z-index:-1;
+      background:
+        linear-gradient(90deg, transparent 0%, rgba(255,255,255,.16) 42%, transparent 74%),
+        linear-gradient(180deg, rgba(255,255,255,.18), transparent 54%);
+      opacity:.62;
+    }
+    .brand-title {
+      text-shadow:0 1px 1px rgba(5,22,55,.16);
+    }
+    .badge-pill {
+      background:rgba(255,255,255,.9)!important;
+      color:#164178!important;
+      backdrop-filter:blur(12px);
+    }
+    .card-soft,
+    .practice-panel,
+    .patient-card,
+    .prog-stat,
+    .prog-chart {
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.98), rgba(247,251,255,.94)),
+        var(--surface);
+      border-color:rgba(184,207,240,.82);
+      box-shadow:0 1px 0 rgba(255,255,255,.85) inset, var(--shadow-sm);
+    }
+    .card-soft:hover,
+    .practice-panel:hover,
+    .prog-stat:hover {
+      border-color:rgba(96,165,250,.58);
+    }
+    .stat-card {
+      min-height:168px;
+    }
+    .stat-card::after {
+      content:"";
+      position:absolute;
+      inset:5px 0 auto 0;
+      height:1px;
+      background:linear-gradient(90deg, transparent, rgba(255,255,255,.95), transparent);
+      pointer-events:none;
+    }
+    .stat-card i.fs-1 {
+      width:64px;
+      height:64px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      border-radius:8px;
+      background:linear-gradient(135deg, #eff6ff, #dbeafe);
+      box-shadow:inset 0 0 0 1px rgba(37,99,235,.12);
+      opacity:1!important;
+    }
+    .stat-num {
+      background:linear-gradient(135deg, var(--primary-dark), var(--primary));
+      -webkit-background-clip:text;
+      background-clip:text;
+      color:transparent!important;
+    }
+    .card-soft h3,
+    .practice-panel h2,
+    .practice-panel h3,
+    .modal-title {
+      color:#102f65;
+    }
+    .btn {
+      position:relative;
+      overflow:hidden;
+    }
+    .btn::after {
+      content:"";
+      position:absolute;
+      inset:0;
+      background:linear-gradient(180deg, rgba(255,255,255,.28), transparent 48%);
+      opacity:.65;
+      pointer-events:none;
+    }
+    .btn-primary,
+    .btn-success {
+      box-shadow:0 14px 26px rgba(37,99,235,.2);
+    }
+    .btn-primary:hover,
+    .btn-success:hover {
+      box-shadow:0 18px 30px rgba(37,99,235,.26);
+    }
+    .btn-outline-primary,
+    .btn-outline-secondary,
+    .btn-light {
+      background:rgba(255,255,255,.86);
+      backdrop-filter:blur(10px);
+    }
+    .input-group {
+      box-shadow:0 10px 24px rgba(11,45,107,.07);
+      border-radius:999px;
+    }
+    .input-group .input-group-text,
+    .input-group .search-input {
+      background:rgba(255,255,255,.94)!important;
+    }
+    .patient-card {
+      border-left:1px solid rgba(184,207,240,.82);
+      padding:22px 24px;
+      box-shadow:0 1px 0 rgba(255,255,255,.9) inset, 0 8px 22px rgba(11,45,107,.07);
+    }
+    .patient-card::before {
+      content:"";
+      position:absolute;
+      inset:0 auto 0 0;
+      width:5px;
+      background:linear-gradient(180deg, var(--primary), var(--teal));
+      opacity:.78;
+    }
+    .patient-card:hover::before {
+      opacity:1;
+    }
+    .avatar-icon {
+      border-radius:8px;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.35), 0 12px 24px rgba(37,99,235,.24);
+    }
+    .status-wait,
+    .status-done,
+    .hn-chip {
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.68);
+    }
+    .topic-item {
+      background:rgba(255,255,255,.82);
+      box-shadow:0 1px 0 rgba(255,255,255,.8) inset;
+    }
+    .topic-item.active {
+      box-shadow:0 16px 32px rgba(37,99,235,.22);
+    }
+    .video-container,
+    .ratio {
+      border:1px solid rgba(184,207,240,.58);
+    }
+    .word-hero {
+      text-shadow:0 10px 28px rgba(37,99,235,.12);
+    }
+    .word-badge {
+      border-width:1px;
+      background:rgba(255,255,255,.9);
+      box-shadow:0 1px 0 rgba(255,255,255,.8) inset, 0 7px 16px rgba(11,45,107,.07);
+    }
+    .word-badge.active {
+      background:linear-gradient(180deg, #eff6ff, #dbeafe);
+    }
+    .score-card {
+      position:relative;
+      overflow:hidden;
+      background:linear-gradient(180deg, #fff, #f7fbff);
+      box-shadow:0 1px 0 rgba(255,255,255,.9) inset, 0 10px 22px rgba(11,45,107,.08);
+    }
+    .score-card::before {
+      content:"";
+      position:absolute;
+      left:14px;
+      right:14px;
+      top:0;
+      height:4px;
+      border-radius:0 0 8px 8px;
+      background:#dbeafe;
+    }
+    .score-card.sel-bad::before { background:var(--bad); }
+    .score-card.sel-mid::before { background:var(--mid); }
+    .score-card.sel-good::before { background:var(--good); }
+    .helper-line,
+    .result-box {
+      box-shadow:0 1px 0 rgba(255,255,255,.88) inset, 0 10px 22px rgba(11,45,107,.07);
+    }
+    textarea.form-control,
+    .form-control,
+    .form-select {
+      background-color:rgba(255,255,255,.96);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.9);
+    }
+    .modal-content {
+      background:linear-gradient(180deg, rgba(255,255,255,.98), rgba(247,251,255,.96));
+      border-color:rgba(184,207,240,.9);
+    }
+    .modal-header {
+      background:
+        linear-gradient(135deg, rgba(239,246,255,.98), rgba(224,242,254,.95)),
+        #f8fbff;
+    }
+    .modal-backdrop.show {
+      opacity:.42;
+      backdrop-filter:blur(4px);
+    }
+    .table tbody tr:hover > * {
+      --bs-table-bg-state:#eef6ff;
+    }
+    .prog-bar {
+      border:1px solid rgba(184,207,240,.9);
+      box-shadow:inset 0 1px 3px rgba(11,45,107,.08);
+    }
+    .prog-bar-fill,
+    .mini-fill {
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.36);
+    }
+
+    .d-none-h { display:none!important; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration:.01ms!important;
+        animation-iteration-count:1!important;
+        scroll-behavior:auto!important;
+        transition-duration:.01ms!important;
+      }
+    }
+
+    @media (max-width:991px) {
+      .navbar-custom { position:relative; }
+      .practice-panel { padding:22px; }
+      .word-hero { font-size:3.8rem; }
+      .word-illus { font-size:4.6rem; }
+    }
+    @media (max-width:767px) {
+      .brand-title { font-size:1.18rem; }
+      .navbar-custom .container-xxl { min-height:auto; }
+      .btn-xl { width:100%; font-size:1.1rem; padding:14px 18px; }
+      .btn-huge { font-size:1.25rem; }
+      .patient-card .btn { width:100%; }
+      .status-wait,
+      .status-done { width:100%; justify-content:center; }
+      .word-hero { font-size:3.1rem; }
+      .word-illus { font-size:3.7rem; }
+      .score-grid { grid-template-columns:1fr; }
+    }
+    @media (max-width:575px) {
+      body { font-size:18px; }
+      .card-soft,
+      .practice-panel { padding:18px!important; }
+      .brand-title i { width:42px; height:42px; }
+      .stat-num { font-size:2.35rem; }
+      .helper-line { flex-direction:column; }
+      .word-grid { justify-content:flex-start; }
+      .word-badge { width:100%; }
+      .d-flex.justify-content-between.align-items-center.mb-3 { align-items:stretch!important; flex-direction:column; gap:12px; }
+      .d-flex.justify-content-between.align-items-center.mb-3 .d-flex { width:100%; }
+      .d-flex.justify-content-between.align-items-center.mb-3 .btn { flex:1 1 0; }
+    }
+
+    /* ==================== Full interface rebuild ==================== */
+    :root {
+      --app-blue-950:#071b3a;
+      --app-blue-900:#0b2d6b;
+      --app-blue-800:#1647a6;
+      --app-blue-700:#2563eb;
+      --app-blue-500:#0ea5e9;
+      --app-blue-300:#93c5fd;
+      --app-blue-100:#dbeafe;
+      --app-blue-50:#eff6ff;
+      --app-canvas:#eef6ff;
+      --app-panel:rgba(255,255,255,.92);
+      --app-panel-solid:#ffffff;
+      --app-border:rgba(147,197,253,.48);
+      --app-text:#10233f;
+      --app-sub:#607089;
+      --app-shadow:0 22px 60px rgba(7,27,58,.13);
+      --app-shadow-sm:0 10px 28px rgba(7,27,58,.09);
+    }
+    body {
+      background:
+        linear-gradient(180deg, rgba(239,246,255,.84), rgba(248,251,255,.96)),
+        radial-gradient(circle at 14% 0%, rgba(14,165,233,.24), transparent 34%),
+        radial-gradient(circle at 92% 12%, rgba(37,99,235,.18), transparent 34%),
+        var(--app-canvas);
+      color:var(--app-text);
+    }
+    body::before {
+      background-image:
+        linear-gradient(90deg, rgba(37,99,235,.055) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(14,165,233,.05) 1px, transparent 1px);
+      background-size:44px 44px;
+      mask-image:linear-gradient(180deg, black, transparent 78%);
+    }
+    .navbar-custom.app-topbar {
+      position:sticky;
+      top:0;
+      z-index:1040;
+      padding:0!important;
+      background:rgba(7,27,58,.86);
+      border-bottom:1px solid rgba(147,197,253,.28);
+      box-shadow:0 16px 44px rgba(7,27,58,.24);
+      backdrop-filter:blur(18px) saturate(150%);
+    }
+    .app-topbar-inner {
+      width:100%;
+      min-height:82px;
+      padding:14px clamp(18px, 4vw, 46px);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:20px;
+    }
+    .brand-lockup {
+      display:flex;
+      align-items:center;
+      gap:14px;
+      min-width:0;
+    }
+    .brand-mark {
+      width:52px;
+      height:52px;
+      display:grid;
+      place-items:center;
+      border-radius:8px;
+      background:linear-gradient(135deg, #38bdf8, #2563eb);
+      color:#fff;
+      box-shadow:0 12px 28px rgba(14,165,233,.32), inset 0 1px 0 rgba(255,255,255,.38);
+      flex:0 0 52px;
+    }
+    .brand-copy { min-width:0; }
+    .brand-title {
+      display:block;
+      margin:0;
+      color:#fff;
+      font-size:1.28rem;
+      line-height:1.3;
+      font-weight:800;
+      text-shadow:none;
+    }
+    .brand-kicker {
+      color:#bfdbfe;
+      font-size:.88rem;
+      font-weight:700;
+      margin-top:1px;
+    }
+    .topbar-status {
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      flex-wrap:wrap;
+      gap:10px;
+    }
+    .topbar-status .badge-pill {
+      min-height:40px;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 14px!important;
+      border:1px solid rgba(191,219,254,.42);
+      background:rgba(255,255,255,.94)!important;
+      color:#123d77!important;
+      box-shadow:none;
+    }
+    .app-shell {
+      width:min(1500px, calc(100% - 36px));
+      margin:28px auto 44px;
+    }
+    .dashboard-hero {
+      min-height:260px;
+      display:grid;
+      grid-template-columns:minmax(0, 1.35fr) minmax(320px, .65fr);
+      gap:22px;
+      align-items:stretch;
+      margin-bottom:22px;
+    }
+    .hero-panel,
+    .focus-panel,
+    .metric-card,
+    .directory-panel,
+    .training-rail,
+    .training-workspace,
+    .assessment-panel {
+      border:1px solid var(--app-border);
+      background:linear-gradient(180deg, rgba(255,255,255,.95), rgba(248,251,255,.9));
+      box-shadow:var(--app-shadow-sm);
+      backdrop-filter:blur(16px) saturate(145%);
+    }
+    .hero-panel {
+      position:relative;
+      overflow:hidden;
+      border-radius:8px;
+      padding:30px;
+      min-width:0;
+    }
+    .hero-panel::before {
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        linear-gradient(120deg, rgba(37,99,235,.12), transparent 42%),
+        linear-gradient(180deg, rgba(255,255,255,.56), transparent);
+      pointer-events:none;
+    }
+    .hero-content {
+      position:relative;
+      max-width:min(100%, 980px);
+      min-width:0;
+    }
+    .eyebrow {
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      min-height:34px;
+      padding:5px 12px;
+      border:1px solid rgba(37,99,235,.18);
+      border-radius:999px;
+      background:#eff6ff;
+      color:#1d4ed8;
+      font-size:.9rem;
+      font-weight:800;
+    }
+    .hero-title {
+      margin:14px 0 8px;
+      padding:.08em 0 .14em;
+      max-width:100%;
+      color:#0b2d6b;
+      font-size:clamp(1.95rem, 3vw, 2.35rem);
+      line-height:1.34;
+      font-weight:800;
+      overflow-wrap:anywhere;
+      word-break:normal;
+      line-break:anywhere;
+      text-wrap:balance;
+    }
+    .hero-subtitle {
+      margin:0;
+      max-width:100%;
+      color:var(--app-sub);
+      font-size:1.08rem;
+      line-height:1.48;
+      font-weight:700;
+      overflow-wrap:anywhere;
+    }
+    .hero-actions {
+      display:flex;
+      flex-wrap:wrap;
+      gap:12px;
+      margin-top:24px;
+    }
+    .focus-panel {
+      position:relative;
+      overflow:hidden;
+      border-radius:8px;
+      padding:24px;
+      background:
+        linear-gradient(145deg, rgba(11,45,107,.94), rgba(37,99,235,.88) 58%, rgba(14,165,233,.82));
+      color:#fff;
+      box-shadow:var(--app-shadow);
+    }
+    .focus-panel::after {
+      content:"";
+      position:absolute;
+      inset:auto -12% -32% 18%;
+      height:180px;
+      background:linear-gradient(90deg, rgba(255,255,255,.16), rgba(255,255,255,.03));
+      transform:rotate(-8deg);
+    }
+    .focus-panel > * { position:relative; z-index:1; }
+    .focus-label {
+      color:#bfdbfe;
+      font-size:.92rem;
+      font-weight:800;
+      text-transform:uppercase;
+    }
+    .focus-value {
+      margin-top:12px;
+      font-size:3rem;
+      line-height:1;
+      font-weight:800;
+    }
+    .focus-meta {
+      margin-top:10px;
+      color:#dbeafe;
+      font-weight:700;
+    }
+    .metrics-grid {
+      display:grid;
+      grid-template-columns:repeat(3, minmax(0, 1fr));
+      gap:16px;
+      margin-bottom:22px;
+    }
+    .metric-card {
+      position:relative;
+      overflow:hidden;
+      min-height:142px;
+      border-radius:8px;
+      padding:22px;
+    }
+    .metric-card::before {
+      content:"";
+      position:absolute;
+      inset:0 auto 0 0;
+      width:5px;
+      background:linear-gradient(180deg, #38bdf8, #2563eb);
+    }
+    .metric-top {
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:16px;
+    }
+    .metric-label {
+      color:var(--app-sub);
+      font-weight:800;
+      font-size:.98rem;
+    }
+    .metric-icon {
+      width:54px;
+      height:54px;
+      display:grid;
+      place-items:center;
+      border-radius:8px;
+      color:#1d4ed8;
+      background:#eff6ff;
+      box-shadow:inset 0 0 0 1px rgba(37,99,235,.1);
+      flex:0 0 54px;
+    }
+    .metric-number {
+      display:block;
+      margin-top:12px;
+      color:#0b2d6b;
+      font-size:3rem;
+      font-weight:800;
+      line-height:1;
+    }
+    .directory-panel {
+      border-radius:8px;
+      padding:24px;
+    }
+    .panel-head {
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:18px;
+      margin-bottom:18px;
+    }
+    .panel-title {
+      margin:0;
+      color:#0b2d6b;
+      font-size:1.45rem;
+      font-weight:800;
+    }
+    .panel-subtitle {
+      margin:4px 0 0;
+      color:var(--app-sub);
+      font-size:1rem;
+      font-weight:700;
+    }
+    .panel-actions {
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      gap:10px;
+    }
+    .search-shell {
+      display:grid;
+      grid-template-columns:auto 1fr;
+      align-items:center;
+      gap:0;
+      border:1px solid rgba(147,197,253,.56);
+      border-radius:8px;
+      background:#fff;
+      box-shadow:0 12px 28px rgba(7,27,58,.07);
+      overflow:hidden;
+      margin-bottom:18px;
+    }
+    .search-shell .input-group-text,
+    .search-shell .search-input {
+      border:0!important;
+      border-radius:0!important;
+      box-shadow:none!important;
+    }
+    .search-shell .input-group-text {
+      min-height:62px;
+      padding:0 18px;
+    }
+    .search-shell .search-input {
+      min-height:62px;
+      padding-left:0;
+    }
+    #patient-list {
+      display:grid;
+      gap:12px;
+    }
+    .training-shell {
+      width:min(1520px, calc(100% - 36px));
+      margin:28px auto 44px;
+      display:grid;
+      grid-template-columns:330px minmax(0, 1fr);
+      gap:22px;
+      align-items:start;
+    }
+    .training-rail {
+      position:sticky;
+      top:104px;
+      border-radius:8px;
+      padding:18px;
+    }
+    .rail-patient {
+      padding:18px;
+      border-radius:8px;
+      background:linear-gradient(145deg, #0b2d6b, #2563eb);
+      color:#fff;
+      box-shadow:0 16px 34px rgba(37,99,235,.2);
+    }
+    .rail-label {
+      color:#bfdbfe;
+      font-size:.88rem;
+      font-weight:800;
+    }
+    #patient-display {
+      color:#fff!important;
+      font-size:1.35rem;
+      line-height:1.3;
+      margin:8px 0 0;
+    }
+    .session-pill {
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      min-height:38px;
+      margin-top:14px;
+      padding:7px 12px;
+      border-radius:999px;
+      background:rgba(255,255,255,.14);
+      color:#dbeafe;
+      font-weight:800;
+    }
+    .rail-section-title {
+      margin:18px 0 12px;
+      color:#0b2d6b;
+      font-weight:800;
+      text-transform:uppercase;
+      font-size:.86rem;
+    }
+    .training-workspace {
+      border-radius:8px;
+      padding:0;
+      overflow:hidden;
+    }
+    .workspace-header {
+      display:flex;
+      align-items:flex-start;
+      gap:16px;
+      padding:24px;
+      border-bottom:1px solid var(--app-border);
+      background:linear-gradient(180deg, #fff, #f7fbff);
+    }
+    .workspace-title { min-width:0; }
+    #topic-title {
+      margin:0;
+      color:#0b2d6b;
+      font-size:1.7rem;
+    }
+    #topic-desc {
+      margin-top:6px!important;
+      color:var(--app-sub)!important;
+      font-weight:700;
+    }
+    .workspace-body {
+      padding:24px;
+    }
+    .practice-panel,
+    .assessment-panel {
+      border-radius:8px;
+      padding:24px;
+    }
+    .practice-panel {
+      box-shadow:none;
+      border:0;
+      background:transparent;
+      backdrop-filter:none;
+    }
+    .assessment-panel {
+      margin-top:22px;
+    }
+    .audio-stage {
+      display:grid;
+      grid-template-columns:minmax(0, 1fr) 360px;
+      gap:18px;
+      align-items:stretch;
+      margin-bottom:18px;
+    }
+    .word-stage {
+      display:grid;
+      place-items:center;
+      min-height:280px;
+      padding:24px;
+      border:1px solid var(--app-border);
+      border-radius:8px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.96), rgba(239,246,255,.82)),
+        #fff;
+      box-shadow:var(--app-shadow-sm);
+      text-align:center;
+    }
+    .word-stage-label {
+      color:var(--app-sub);
+      font-size:.92rem;
+      font-weight:800;
+      text-transform:uppercase;
+    }
+    .word-hero {
+      font-size:5.2rem;
+      padding:0;
+    }
+    .control-stack {
+      display:grid;
+      gap:12px;
+    }
+    .speed-control {
+      padding:16px;
+      border:1px solid var(--app-border);
+      border-radius:8px;
+      background:#fff;
+    }
+    .speed-control .btn-group {
+      width:100%;
+      display:grid;
+      grid-template-columns:repeat(3, 1fr);
+      gap:8px;
+    }
+    .speed-control .btn {
+      border-radius:8px!important;
+      min-height:48px;
+    }
+    .recognition-grid {
+      display:grid;
+      grid-template-columns:minmax(0, .8fr) minmax(0, 1.2fr);
+      gap:14px;
+      margin:18px 0;
+    }
+    .heard-card {
+      min-height:112px;
+      display:grid;
+      place-items:center;
+      border:1px solid var(--app-border)!important;
+      border-radius:8px!important;
+      background:#fff!important;
+      box-shadow:var(--app-shadow-sm);
+    }
+    .word-tools {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      margin:20px 0 14px;
+    }
+    .word-tools h5 {
+      margin:0;
+      color:#0b2d6b;
+      font-size:1.12rem;
+    }
+    .video-container {
+      border-radius:8px;
+    }
+    .modal-content {
+      border-radius:8px!important;
+    }
+    .btn {
+      border-radius:8px;
+    }
+    .btn-xl {
+      min-height:58px;
+      padding:13px 20px;
+      font-size:1.1rem;
+    }
+    .btn-huge {
+      min-height:78px;
+      font-size:1.32rem;
+    }
+    @media (max-width:1199px) {
+      .dashboard-hero,
+      .audio-stage {
+        grid-template-columns:1fr;
+      }
+      .training-shell {
+        grid-template-columns:1fr;
+      }
+      .training-rail {
+        position:static;
+      }
+      #topic-menu {
+        display:grid;
+        grid-template-columns:repeat(2, minmax(0, 1fr));
+        gap:10px;
+      }
+      .topic-item {
+        margin-bottom:0;
+      }
+      .patient-row {
+        grid-template-columns:64px minmax(0, 1fr);
+      }
+      .patient-status,
+      .patient-actions {
+        grid-column:2;
+        justify-content:flex-start;
+      }
+    }
+    @media (max-width:767px) {
+      .app-shell,
+      .training-shell {
+        width:min(100% - 22px, 1520px);
+        margin-top:18px;
+      }
+      .app-topbar-inner,
+      .panel-head,
+      .workspace-header,
+      .word-tools {
+        align-items:stretch;
+        flex-direction:column;
+      }
+      .topbar-status,
+      .panel-actions,
+      .hero-actions,
+      .word-tools > .d-flex {
+        justify-content:stretch;
+      }
+      .topbar-status .badge-pill,
+      .panel-actions .btn,
+      .hero-actions .btn {
+        width:100%;
+      }
+      .dashboard-hero,
+      .metrics-grid,
+      .recognition-grid {
+        grid-template-columns:1fr;
+      }
+      .patient-row {
+        grid-template-columns:1fr;
+      }
+      .patient-status,
+      .patient-actions {
+        grid-column:auto;
+        justify-content:stretch;
+      }
+      .patient-actions {
+        display:grid;
+        grid-template-columns:1fr;
+      }
+      .patient-actions .btn {
+        width:100%;
+      }
+      .hero-panel,
+      .directory-panel,
+      .workspace-body,
+      .workspace-header,
+      .assessment-panel {
+        padding:18px;
+      }
+      .hero-title {
+        font-size:1.78rem;
+        line-height:1.38;
+        padding:.08em 0 .16em;
+      }
+      .focus-value {
+        font-size:2.35rem;
+      }
+      #topic-menu {
+        grid-template-columns:1fr;
+      }
+      .word-hero {
+        font-size:3.4rem;
+      }
+      .speed-control .btn-group {
+        grid-template-columns:1fr;
+      }
+    }
+
+    /* ============================================================
+       ✦ New UI Theme 2.0 — soft, modern, premium clinical ✦
+       Indigo → Violet with a cyan/teal accent, larger radii,
+       gentler shadows. Re-skins every surface; layout untouched.
+       ============================================================ */
+    :root{
+      --primary:#2563eb; --primary-2:#0ea5e9; --primary-dark:#1e3a8a;
+      --teal:#06b6d4; --gold:#7dd3fc;
+      --good:#0d9488; --mid:#e08600; --bad:#e11d48;
+      --ink:#10233f; --muted:#6b7280;
+      --line:#dbe7f8; --line-strong:#c2d6f2;
+      --surface:#ffffff; --surface-soft:#f2f8ff; --bg:#eaf3ff;
+      --radius-card:20px; --radius-control:14px;
+      --shadow-sm:0 8px 24px rgba(11,45,107,.07);
+      --shadow-md:0 18px 44px rgba(11,45,107,.11);
+      --shadow-lg:0 32px 74px rgba(11,45,107,.18);
+      /* remap the premium-layout (--app-*) tokens to the new palette */
+      --app-blue-950:#071b3a; --app-blue-900:#1e3a8a; --app-blue-800:#1e40af;
+      --app-blue-700:#2563eb; --app-blue-500:#06b6d4; --app-blue-300:#93c5fd;
+      --app-blue-100:#dbeafe; --app-blue-50:#eff6ff;
+      --app-canvas:#eaf3ff; --app-border:#dbe7f8;
+      --app-text:#10233f; --app-sub:#6b7280;
+      --app-shadow:0 26px 64px rgba(11,45,107,.16); --app-shadow-sm:0 12px 32px rgba(11,45,107,.09);
+    }
+
+    /* ---- Canvas ---- */
+    body{
+      background:
+        radial-gradient(1100px 520px at 6% -8%, rgba(37,99,235,.14), transparent 60%),
+        radial-gradient(1000px 520px at 100% 0%, rgba(6,182,212,.13), transparent 55%),
+        linear-gradient(180deg,#f4f9ff,#eaf3ff) fixed;
+      color:var(--ink);
+    }
+    body::before{
+      background-image:
+        linear-gradient(90deg, rgba(37,99,235,.05) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(37,99,235,.045) 1px, transparent 1px);
+      background-size:48px 48px;
+      -webkit-mask-image:linear-gradient(180deg, rgba(0,0,0,.65), transparent 72%);
+      mask-image:linear-gradient(180deg, rgba(0,0,0,.65), transparent 72%);
+      opacity:1;
+    }
+
+    /* ---- Top bar (glass + brand) ---- */
+    .navbar-custom.app-topbar{
+      background:linear-gradient(100deg, rgba(7,47,116,.97), rgba(37,99,235,.94) 52%, rgba(14,165,233,.92));
+      border-bottom:1px solid rgba(186,230,253,.38);
+      box-shadow:0 14px 40px rgba(14,90,180,.28);
+    }
+    .brand-mark{ border-radius:15px; background:linear-gradient(135deg,#60a5fa,#22d3ee 58%,#0ea5e9);
+      box-shadow:0 12px 26px rgba(14,165,233,.34), inset 0 1px 0 rgba(255,255,255,.46); }
+    .brand-kicker{ color:#dbeafe; }
+    .topbar-status .badge-pill{ background:linear-gradient(180deg, rgba(255,255,255,.98), rgba(239,246,255,.94))!important; color:#1d4ed8!important;
+      border:1px solid rgba(191,219,254,.72); border-radius:999px; box-shadow:0 10px 24px rgba(7,47,116,.14); }
+
+    /* ---- Cards / panels: soft, rounded, elevated ---- */
+    .hero-panel,.focus-panel,.metric-card,.directory-panel,.training-rail,
+    .training-workspace,.assessment-panel,.practice-panel,.card-soft,.stat-card,
+    .prog-stat,.prog-chart{
+      border-radius:var(--radius-card)!important;
+      border:1px solid var(--line);
+      background:linear-gradient(180deg,#ffffff,#f9fcff);
+      box-shadow:var(--shadow-sm);
+    }
+    .card-soft:hover,.practice-panel:hover,.prog-stat:hover{ border-color:var(--line-strong); }
+
+    /* Hero */
+    .hero-panel{ padding:34px;
+      background:
+        radial-gradient(680px 300px at 100% -18%, rgba(37,99,235,.12), transparent 60%),
+        linear-gradient(180deg,#ffffff,#f9fcff); }
+    .hero-panel::before{ background:linear-gradient(120deg, rgba(37,99,235,.10), transparent 46%); }
+    .eyebrow{ background:#eff6ff; border:1px solid rgba(37,99,235,.2); color:#0284c7; border-radius:999px; }
+    .hero-title{
+      background:linear-gradient(120deg,#1e40af,#0ea5e9 58%,#0891b2);
+      -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:#0b2d6b;
+    }
+    .hero-subtitle{ color:var(--muted); }
+
+    /* Focus panel (KPI) */
+    .focus-panel{ border:0;
+      background:linear-gradient(150deg,#1e40af,#0284c7 55%,#0891b2);
+      color:#fff; box-shadow:0 26px 60px rgba(11,45,107,.32); }
+    .focus-label{ color:#dbeafe; } .focus-meta{ color:#dbeafe; }
+
+    /* Metric cards */
+    .metric-card{ padding:22px; }
+    .metric-card::before{ width:6px; background:linear-gradient(180deg,#38bdf8,#22d3ee); }
+    .metric-icon{ border-radius:14px; color:#1e40af; background:#eff6ff; box-shadow:inset 0 0 0 1px rgba(37,99,235,.12); }
+    .metric-number{ color:#0b2d6b; }
+    .metric-card:hover{ transform:translateY(-3px); box-shadow:var(--shadow-md); border-color:var(--line-strong); }
+    .panel-title,.rail-section-title,.word-stage-label,.word-tools h5{ color:#0b2d6b; }
+
+    /* ---- Buttons ---- */
+    .btn{ border-radius:var(--radius-control); box-shadow:0 8px 20px rgba(11,45,107,.09); }
+    .btn:hover{ transform:translateY(-2px); box-shadow:0 14px 30px rgba(11,45,107,.16); }
+    .btn-primary{ background:linear-gradient(135deg,#2563eb,#0ea5e9); }
+    .btn-primary:hover,.btn-primary:focus{ background:linear-gradient(135deg,#1e40af,#0284c7); color:#fff; }
+    .btn-success{ background:linear-gradient(135deg,#0d9488,#14b8a6); }
+    .btn-danger{ background:linear-gradient(135deg,#e11d48,#be123c); }
+    .btn-outline-primary{ border:2px solid rgba(37,99,235,.4); color:#2563eb; background:#fff; }
+    .btn-outline-primary:hover{ background:linear-gradient(135deg,#2563eb,#0ea5e9); border-color:transparent; color:#fff; }
+    .btn-outline-secondary{ border:2px solid rgba(100,110,150,.34); color:#435063; }
+    .btn-outline-secondary:hover,.btn-outline-secondary.active{ background:#e0f2fe; color:#1e40af; border-color:rgba(37,99,235,.42); }
+    .btn-outline-danger:hover{ background:linear-gradient(135deg,#e11d48,#be123c); color:#fff; }
+    .btn:focus-visible{ outline:4px solid rgba(37,99,235,.42); outline-offset:3px; }
+
+    /* ---- Inputs / search ---- */
+    .search-input:focus,.form-control:focus,.form-select:focus{ border-color:var(--primary); box-shadow:0 0 0 4px rgba(37,99,235,.14); }
+    .search-shell{ border-radius:var(--radius-control); border-color:var(--line-strong); }
+
+    /* ---- Patient cards ---- */
+    .patient-card{ border-radius:16px; border:1px solid var(--line); border-left:5px solid transparent; }
+    .patient-card:hover{ transform:translateY(-2px); border-color:rgba(37,99,235,.34); border-left-color:#0ea5e9; box-shadow:var(--shadow-md); }
+    .patient-name{ color:#0b2d6b; }
+    .avatar-icon{ border-radius:16px; background:linear-gradient(135deg,#3b82f6,#22d3ee); box-shadow:0 10px 22px rgba(37,99,235,.28), inset 0 1px 0 rgba(255,255,255,.35); }
+
+    /* ---- Chips / status ---- */
+    .hn-chip{ border-radius:999px; background:#eff6ff; border:1px solid #cfe4fd; color:#1e40af; }
+    .status-done{ background:#e8fbf4; color:#0f766e; border:1px solid #b7ecdb; }
+    .status-wait{ background:#fff6e6; color:#b45309; border:1px solid #f6d590; }
+    .session-pill{ background:rgba(255,255,255,.16); color:#dbeafe; }
+    .rail-patient{ background:linear-gradient(150deg,#1e40af,#0ea5e9); box-shadow:0 16px 34px rgba(37,99,235,.28); }
+    .meta-chip{ border-radius:999px; }
+
+    /* ---- Topic menu ---- */
+    .topic-item{ border-radius:14px; }
+    .topic-item:hover{ border-color:rgba(37,99,235,.36); }
+    .topic-item .num{ border-radius:12px; background:#eff6ff; color:#1e40af; }
+    .topic-item.active{ background:linear-gradient(135deg,#1e40af,#0ea5e9); border-color:transparent; color:#fff; }
+    .topic-item.active .num{ background:rgba(255,255,255,.2); color:#fff; }
+    .topic-item.active .topic-kind{ color:#dbeafe; }
+
+    /* ---- Word practice ---- */
+    .word-hero{ background:linear-gradient(120deg,#2563eb,#0ea5e9 55%,#0891b2);
+      -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+    .word-badge{ border-radius:14px; }
+    .word-badge:hover{ border-color:#0ea5e9; background:#eff6ff; }
+    .word-badge.active{ border-color:#0ea5e9; background:#eff6ff; color:#1e40af; box-shadow:0 0 0 4px rgba(37,99,235,.15); }
+    .word-group-title{ color:#1e40af; border-bottom:2px dashed var(--line); }
+    .word-illus{ filter:drop-shadow(0 10px 18px rgba(11,45,107,.16)); }
+    .speaker-btn{ border:2px solid rgba(37,99,235,.4); color:#2563eb; }
+    .speaker-btn:hover{ background:linear-gradient(135deg,#2563eb,#0ea5e9); border-color:transparent; color:#fff; }
+
+    /* ---- Score cards (0/1/2) ---- */
+    .score-card{ border-radius:18px; }
+    .score-card:hover{ border-color:var(--line-strong); }
+    .score-pts{ border-radius:12px; }
+
+    /* ---- Result / helper / heard ---- */
+    .result-good{ background:#e8fbf4; color:var(--good); border:2px solid #b7ecdb; }
+    .result-mid{ background:#fff6e6; color:var(--mid); border:2px solid #f6d590; }
+    .result-bad{ background:#fff0f3; color:var(--bad); border:2px solid #f6c6cf; }
+    .helper-line{ border:1px solid #bcd7f7; border-left:5px solid var(--teal);
+      background:linear-gradient(135deg,#eef6ff,#e0f2fe); color:#33507a; }
+    .acc-chip{ background:rgba(11,45,107,.08); }
+
+    /* ---- Progress / charts ---- */
+    .prog-bar,.mini-bar{ background:#e6f1ff; }
+    .fill-good{ background:linear-gradient(180deg,#2dd4bf,#0d9488); }
+    .fill-mid{ background:linear-gradient(180deg,#fbbf24,#e08600); }
+    .fill-bad{ background:linear-gradient(180deg,#fb7185,#e11d48); }
+    .hist-good{ background:#e8fbf4; color:var(--good); border:1px solid #b7ecdb; }
+    .hist-mid{ background:#fff6e6; color:var(--mid); border:1px solid #f6d590; }
+    .hist-bad{ background:#fff0f3; color:var(--bad); border:1px solid #f6c6cf; }
+
+    /* ---- Follow-up ---- */
+    #followup-panel.followup-active{ border-color:#f6c6cf!important; box-shadow:0 0 0 3px rgba(225,29,72,.08); }
+    .followup-card{ border-radius:14px; }
+
+    /* ---- Modals / tables ---- */
+    .modal-content{ border-radius:22px!important; border:1px solid var(--line); box-shadow:var(--shadow-lg); }
+    .modal-header{ background:linear-gradient(180deg,#eff6ff,#f9fcff); border-bottom:1px solid var(--line); }
+    .modal-footer{ background:#f9fcff; border-top:1px solid var(--line); }
+    .table thead th{ background:#eef6ff; color:#24456f; border-bottom:1px solid var(--line-strong); }
+    .modal-scroll{ border-radius:14px; border-color:var(--line); }
+
+    /* ---- ✦ ภาพรวมผลการประเมิน (premium analytics) ✦ ---- */
+    .ov-grid{ display:grid; grid-template-columns:210px 1fr; gap:28px; align-items:center; }
+    .ov-donut{ position:relative; width:210px; height:210px; margin:0 auto; }
+    .ov-donut-glow{ position:absolute; inset:2px; border-radius:50%; z-index:0;
+      background:conic-gradient(from -90deg, #0d9488, #e08600, #e11d48, #0ea5e9, #0d9488);
+      filter:blur(20px); opacity:.30; animation:ov-spin 16s linear infinite; }
+    @keyframes ov-spin{ to{ transform:rotate(360deg); } }
+    .ov-pie{ position:absolute; inset:0; z-index:1; border-radius:50%; background:#e6f1ff;
+      -webkit-mask:radial-gradient(farthest-side, transparent 60%, #000 61%);
+              mask:radial-gradient(farthest-side, transparent 60%, #000 61%); }
+    .ov-donut-ring{ position:absolute; inset:47px; z-index:2; border-radius:50%;
+      background:linear-gradient(180deg,#ffffff,#f9fcff); box-shadow:inset 0 2px 12px rgba(11,45,107,.10); }
+    .ov-center{ position:absolute; inset:0; z-index:3; display:flex; flex-direction:column;
+      align-items:center; justify-content:center; text-align:center; }
+    .ov-center-num{ font-size:2.7rem; font-weight:800; line-height:1; letter-spacing:-.5px;
+      background:linear-gradient(120deg,#1e40af,#0ea5e9 55%,#0891b2);
+      -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:#0b2d6b; }
+    .ov-center-sub{ font-size:.78rem; font-weight:700; color:var(--muted); margin-top:3px; }
+    .ov-center-chip{ margin-top:9px; padding:3px 13px; border-radius:999px; font-weight:800; font-size:.82rem; background:#eff6ff; color:#1e40af; }
+
+    .ov-tiles{ display:grid; gap:12px; }
+    .ov-tile{ padding:14px 16px; border:1px solid var(--line); border-radius:16px;
+      background:linear-gradient(180deg,#fff,#f9fcff); box-shadow:0 6px 16px rgba(11,45,107,.05);
+      transition:transform .16s ease, box-shadow .16s ease; }
+    .ov-tile:hover{ transform:translateY(-2px); box-shadow:var(--shadow-md); }
+    .ov-tile-head{ display:flex; align-items:center; gap:8px; font-weight:800; color:#33507a; }
+    .ov-tile-head small{ color:var(--muted); font-weight:700; }
+    .ov-ic{ font-size:1.15rem; line-height:1; }
+    .ov-tile-num{ display:flex; align-items:baseline; gap:10px; margin:7px 0 9px; }
+    .ov-tile-num > span{ font-size:1.95rem; font-weight:800; line-height:1; color:#0b2d6b; }
+    .ov-tile-pct{ font-size:1rem; font-weight:800; color:var(--muted); }
+    .ov-tile-track{ height:10px; border-radius:999px; background:#e6f1ff; overflow:hidden; }
+    .ov-tile-fill{ display:block; height:100%; width:0; border-radius:999px;
+      transition:width .9s cubic-bezier(.22,1,.36,1); }
+    .ov-strip{ display:flex; height:16px; margin-top:20px; border-radius:999px; overflow:hidden;
+      background:#e6f1ff; box-shadow:inset 0 1px 4px rgba(11,45,107,.14); }
+    .ov-strip .dist-seg{ font-size:.72rem; }
+    .ov-strip .dist-empty{ line-height:16px; }
+
+    /* Landing page: subtle image backdrop for the patient entry section */
+    #view-landing{
+      position:relative;
+      isolation:isolate;
+      width:100%;
+      max-width:none;
+      min-height:calc(100vh - 82px);
+      margin:0;
+      padding:clamp(26px, 5vh, 56px) clamp(18px, 4vw, 46px) 32px;
+      display:flex;
+      align-items:flex-start;
+      justify-content:center;
+    }
+    #view-landing::before{
+      content:"";
+      position:absolute;
+      z-index:0;
+      pointer-events:none;
+      inset:0;
+      background:
+        linear-gradient(180deg, rgba(240,247,255,.22), rgba(224,239,255,.38)),
+        url("assets/landing-rehab-bg.png") center center / cover no-repeat;
+      opacity:1;
+      filter:saturate(1.08) contrast(1.04);
+    }
+    #view-landing > .row{
+      position:relative;
+      z-index:1;
+      width:min(1500px, 100%);
+      margin:0;
+    }
+    #view-landing .practice-panel{
+      background:rgba(255,255,255,.9);
+      border-color:rgba(194,214,242,.86);
+      box-shadow:0 26px 68px rgba(11,45,107,.12);
+      backdrop-filter:blur(16px) saturate(125%);
+    }
+    #view-landing .btn-outline-secondary{
+      background:rgba(255,255,255,.86);
+      backdrop-filter:blur(12px);
+    }
+    @media (max-width:640px){
+      #view-landing{
+        min-height:calc(100vh - 82px);
+        padding-inline:14px;
+        padding-top:24px;
+      }
+      #view-landing::before{
+        background-position:center top;
+      }
+      .ov-grid{ grid-template-columns:1fr; gap:20px; }
+      .ov-donut{ width:190px; height:190px; }
+    }
+
+    /* ---- กลุ่มผู้ป่วย: รอประเมิน / ประเมินแล้ววันนี้ ---- */
+    .pt-group + .pt-group{ margin-top:22px; }
+    .pt-group-head{ display:flex; align-items:center; justify-content:space-between; gap:10px;
+      margin-bottom:14px; padding:11px 16px; border-radius:14px; font-weight:800; font-size:1.06rem; }
+    .pt-group-head.pt-wait{ background:linear-gradient(180deg,#fff8ec,#fff3dd); color:#b45309; border:1px solid #f6d590; }
+    .pt-group-head.pt-done{ background:linear-gradient(180deg,#eafaf4,#e2f6ee); color:#0f766e; border:1px solid #b7ecdb; }
+    .pt-group-count{ min-width:34px; text-align:center; padding:2px 12px; border-radius:999px;
+      background:rgba(255,255,255,.72); box-shadow:inset 0 0 0 1px rgba(0,0,0,.05); font-weight:800; }
+    .pt-group-empty{ padding:18px; text-align:center; color:var(--muted); font-weight:700;
+      border:1.5px dashed var(--line-strong); border-radius:14px; background:#f9fcff; }
+
+    /* ---- ตารางรายชื่อผู้ป่วย (กดทั้งแถวเข้าห้องฝึก) ---- */
+    .pt-table{ margin-bottom:0; border-radius:16px; overflow:hidden; box-shadow:0 6px 18px rgba(40,33,97,.05); }
+    .pt-table thead th{ font-size:.9rem; white-space:nowrap; }
+    .pt-table td{ vertical-align:middle; padding-top:12px; padding-bottom:12px; }
+    .pt-tr{ cursor:pointer; transition:background .14s ease; }
+    .pt-tr:hover{ background:#f5f3ff; }
+    .pt-cell-name{ display:flex; align-items:center; gap:12px; }
+    .pt-name{ font-weight:800; color:#2b2166; font-size:1.06rem; line-height:1.2; }
+    .avatar-icon.avatar-sm{ width:44px; height:44px; flex:0 0 44px; font-size:1.1rem; border-radius:12px; }
+    .pt-actions{ white-space:nowrap; }
+    .pt-btn{ min-height:auto!important; padding:8px 12px!important; font-size:.92rem!important; box-shadow:none!important; }
+    .pt-btn + .pt-btn{ margin-left:6px; }
+    .pt-btn:hover{ transform:translateY(-1px); }
+    @media (max-width:820px){ .pt-btn{ padding:8px 10px!important; } }
+
+    /* ---- แถบเครื่องมือทะเบียนผู้ป่วย (ค้นหา/กรอง/เรียง/แบ่งหน้า) ---- */
+    .roster-toolbar{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+    .roster-chips{ display:flex; gap:8px; flex-wrap:wrap; }
+    .roster-chip{ display:inline-flex; align-items:center; gap:8px; padding:8px 14px; border-radius:999px;
+      border:1.5px solid var(--line-strong); background:#fff; color:#4a4f70; font-weight:800; font-size:.95rem;
+      cursor:pointer; transition:transform .12s ease, border-color .14s ease, background .14s ease; }
+    .roster-chip:hover{ border-color:var(--primary); transform:translateY(-1px); }
+    .roster-chip .roster-chip-n{ min-width:24px; text-align:center; padding:1px 8px; border-radius:999px;
+      background:#eef0fb; color:#4b3f7a; font-size:.85rem; }
+    .roster-chip.active{ color:#fff; border-color:transparent; background:linear-gradient(135deg,#4f46e5,#7c3aed); box-shadow:0 8px 18px rgba(79,70,229,.24); }
+    .roster-chip.active .roster-chip-n{ background:rgba(255,255,255,.26); color:#fff; }
+    .roster-chip.c-wait.active{ background:linear-gradient(135deg,#e08600,#f59e0b); box-shadow:0 8px 18px rgba(224,134,0,.24); }
+    .roster-chip.c-done.active{ background:linear-gradient(135deg,#0d9488,#14b8a6); box-shadow:0 8px 18px rgba(13,148,136,.24); }
+    .roster-chip.c-fail.active{ background:linear-gradient(135deg,#e11d48,#be123c); box-shadow:0 8px 18px rgba(225,29,72,.24); }
+    .roster-controls{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .roster-select{ max-width:220px; padding:9px 12px; border-radius:12px; border:1.5px solid var(--line-strong);
+      background:#fff; color:var(--ink); font-weight:700; font-size:.92rem; cursor:pointer; }
+    .roster-btn{ display:inline-flex; align-items:center; gap:6px; padding:9px 14px; border-radius:12px;
+      border:1.5px solid var(--line-strong); background:#fff; color:#4a4f70; font-weight:800; font-size:.92rem; cursor:pointer; }
+    .roster-btn.active{ background:#efeafe; color:#5b21b6; border-color:rgba(124,58,237,.4); }
+
+    .pt-sort{ cursor:pointer; user-select:none; white-space:nowrap; }
+    .pt-sort:hover{ color:var(--primary); }
+    .pt-sort.is-active{ color:var(--primary); }
+    .pt-when{ font-weight:700; }
+    .pt-ago{ color:var(--muted); font-weight:700; }
+    .pt-ago.pt-overdue{ color:var(--bad); }
+    .pt-tr.pt-fail{ background:#fff5f6; }
+    .pt-tr.pt-fail:hover{ background:#ffedf0; }
+
+    .roster-pager{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+    .roster-count{ color:var(--muted); font-weight:700; }
+    .roster-pages{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+    .roster-pg{ min-width:38px; height:38px; padding:0 10px; border-radius:10px; border:1.5px solid var(--line-strong);
+      background:#fff; color:#4a4f70; font-weight:800; cursor:pointer; transition:all .12s ease; }
+    .roster-pg:hover:not(:disabled){ border-color:var(--primary); color:var(--primary); }
+    .roster-pg.active{ background:linear-gradient(135deg,#4f46e5,#7c3aed); color:#fff; border-color:transparent; }
+    .roster-pg:disabled{ opacity:.4; cursor:not-allowed; }
+    .roster-dots{ padding:0 4px; color:var(--muted); font-weight:800; }
+
+    .pt-table.pt-compact td{ padding-top:6px; padding-bottom:6px; }
+    .pt-table.pt-compact .avatar-icon.avatar-sm{ width:34px; height:34px; flex:0 0 34px; font-size:.95rem; border-radius:10px; }
+    .pt-table.pt-compact .pt-name{ font-size:.98rem; }
+    .pt-table.pt-compact .pt-cell-name{ gap:9px; }
+    .pt-table.pt-compact .pt-btn{ padding:5px 9px!important; font-size:.85rem!important; }
+    @media (max-width:640px){ .roster-toolbar,.roster-pager{ justify-content:flex-start; } .roster-select{ max-width:100%; } }
+  </style>
+</head>
+<body>
+
+  <!-- ==================== Top application bar ==================== -->
+  <nav class="navbar navbar-custom app-topbar">
+    <div class="app-topbar-inner">
+      <div class="brand-lockup" role="button" onclick="goHome()" title="กลับหน้าแรก">
+        <div class="brand-mark"><i class="fa-solid fa-house-medical fs-4"></i></div>
+        <div class="brand-copy">
+          <div class="brand-title">StrokeSpeak AI Thawatburi Hospital</div>
+          <div class="brand-kicker">ระบบฝึกพูดและติดตามการฟื้นฟูผู้ป่วยโรคหลอดเลือดสมอง</div>
+        </div>
+      </div>
+      <div class="topbar-status">
+        <span class="badge badge-pill bg-white text-primary px-3 py-2 fw-bold d-none-h" id="role-badge"></span>
+        <span class="badge badge-pill bg-white text-primary px-3 py-2 fw-bold" id="conn-badge">
+          <i class="fa-solid fa-circle-notch"></i> กำลังตรวจสอบ...
+        </span>
+        <span class="badge badge-pill bg-white text-primary px-3 py-2 fw-bold" id="current-date">⏳</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ==================== มุมมอง A: หน้าแรก (คนไข้ค้นหาตัวเอง ไม่ต้องล็อกอิน) ==================== -->
+  <main id="view-landing" class="app-shell">
+    <div class="row justify-content-center">
+      <div class="col-lg-8 mx-auto">
+        <div class="text-center mb-4">
+          <div style="font-size:3.4rem;">🗣️💪</div>
+          <h1 class="mb-2">ยินดีต้อนรับ</h1>
+          <p class="text-muted mb-0 fs-5">สำหรับผู้ป่วย: กรอกชื่อ-สกุล หรือเลขบัตรประชาชน แล้วเริ่มฝึกได้เลย (ไม่ต้องเข้าสู่ระบบ)</p>
+        </div>
+        <div class="practice-panel mb-4">
+          <label class="form-label fw-bold fs-4 mb-3"><i class="fa-solid fa-magnifying-glass text-primary me-2"></i> ค้นหาชื่อของฉัน</label>
+          <div class="row g-2">
+            <div class="col-md-8"><input id="landing-search" class="form-control search-input" placeholder="พิมพ์ชื่อ-สกุล หรือเลขบัตรประชาชน 13 หลัก" onkeydown="if(event.key==='Enter') patientSearch()"></div>
+            <div class="col-md-4"><button class="btn btn-primary btn-huge" style="min-height:auto;padding:14px;" onclick="patientSearch()"><i class="fa-solid fa-arrow-right-to-bracket me-2"></i> ค้นหา / เข้าฝึก</button></div>
+          </div>
+          <div id="landing-result" class="mt-4"></div>
+        </div>
+        <div class="text-center">
+          <button class="btn btn-outline-secondary btn-xl" onclick="openNurseLogin()"><i class="fa-solid fa-user-nurse me-2"></i> สำหรับพยาบาล / เจ้าหน้าที่ (เข้าสู่ระบบ)</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ==================== มุมมอง B: Dashboard (สำหรับพยาบาลหลังล็อกอิน) ==================== -->
+  <main id="view-dashboard" class="app-shell d-none-h">
+    <section class="dashboard-hero">
+      <div class="hero-panel">
+        <div class="hero-content">
+          <span class="eyebrow"><i class="fa-solid fa-user-nurse"></i> พยาบาล: <span id="nurse-name">-</span></span>
+          <h1 class="hero-title">StrokeSpeak AI Thawatburi Hospital</h1>
+          <p class="hero-subtitle">ระบบฝึกพูดและติดตามการฟื้นฟูผู้ป่วยโรคหลอดเลือดสมอง สำหรับการฝึกประจำวัน</p>
+          <div class="hero-actions">
+            <button class="btn btn-primary btn-xl" onclick="openAddPatient()"><i class="fa-solid fa-user-plus"></i> เพิ่มผู้ป่วย</button>
+            <button class="btn btn-success btn-xl" onclick="openProgress()"><i class="fa-solid fa-chart-line"></i> ความก้าวหน้า</button>
+            <button class="btn btn-outline-secondary btn-xl" onclick="openHistory()"><i class="fa-solid fa-file-lines"></i> ประวัติการฝึก</button>
+            <button class="btn btn-outline-danger btn-xl" onclick="nurseLogout()"><i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ</button>
+          </div>
+        </div>
+      </div>
+      <div class="focus-panel">
+        <div class="focus-label">พร้อมประเมินวันนี้</div>
+        <div class="focus-value" id="count-wait">0</div>
+        <div class="focus-meta"><i class="fa-regular fa-clock me-1"></i> รายการที่ยังรอรับการฝึกและประเมิน</div>
+      </div>
+    </section>
+
+    <section class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-top">
+          <div>
+            <div class="metric-label">ผู้ป่วยทั้งหมด</div>
+            <span class="metric-number" id="count-total">0</span>
+          </div>
+          <div class="metric-icon"><i class="fa-solid fa-users fs-4"></i></div>
+        </div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-top">
+          <div>
+            <div class="metric-label">รอรับการประเมินวันนี้</div>
+            <span class="metric-number text-warning" id="count-wait-visual">0</span>
+          </div>
+          <div class="metric-icon"><i class="fa-solid fa-clock fs-4"></i></div>
+        </div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-top">
+          <div>
+            <div class="metric-label">ประเมินแล้ววันนี้</div>
+            <span class="metric-number text-success" id="count-done">0</span>
+          </div>
+          <div class="metric-icon"><i class="fa-solid fa-circle-check fs-4"></i></div>
+        </div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-top">
+          <div>
+            <div class="metric-label">บันทึกการฝึกทั้งหมด</div>
+            <span class="metric-number" id="count-sessions">0</span>
+          </div>
+          <div class="metric-icon"><i class="fa-solid fa-clipboard-list fs-4"></i></div>
+        </div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-top">
+          <div>
+            <div class="metric-label">ฝึกเดือนนี้</div>
+            <span class="metric-number" id="count-month">0</span>
+          </div>
+          <div class="metric-icon"><i class="fa-solid fa-calendar-day fs-4"></i></div>
+        </div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-top">
+          <div>
+            <div class="metric-label">คะแนนเฉลี่ยรวม (เต็ม 2)</div>
+            <span class="metric-number text-muted" id="avg-score">-</span>
+          </div>
+          <div class="metric-icon"><i class="fa-solid fa-star fs-4"></i></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ต้องติดตามเร่งด่วน: ผู้ป่วยที่ประเมินแล้วไม่ผ่าน (ผลล่าสุด = 0) -->
+    <section id="followup-panel" class="metric-card" style="display:block; margin-bottom:22px;">
+      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div class="metric-label" style="font-size:1.05rem;"><i class="fa-solid fa-triangle-exclamation text-danger me-2"></i> ต้องติดตามเร่งด่วน (ประเมินแล้วไม่ผ่าน)</div>
+        <span class="badge badge-pill" style="background:#fff0f0;color:#c53030;border:1px solid #f0b4b4;font-weight:800;"><span id="followup-count">0</span> ราย</span>
+      </div>
+      <div id="followup-list"><div class="text-center text-muted py-3">— กำลังโหลด —</div></div>
+    </section>
+
+    <section class="metric-card" style="display:block; margin-bottom:22px;">
+      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div class="metric-label" style="font-size:1.05rem;"><i class="fa-solid fa-chart-pie me-2"></i> ภาพรวมผลการประเมินทั้งหมด</div>
+        <span class="text-muted fw-bold" id="dist-total">0 รายการ</span>
+      </div>
+      <div class="ov-grid">
+        <div class="ov-donut">
+          <div class="ov-donut-glow"></div>
+          <div class="ov-pie" id="ov-pie"></div>
+          <div class="ov-donut-ring"></div>
+          <div class="ov-center">
+            <div class="ov-center-num" id="ov-avg">-</div>
+            <div class="ov-center-sub">คะแนนเฉลี่ย / 2</div>
+            <div class="ov-center-chip" id="ov-level">—</div>
+          </div>
+        </div>
+        <div class="ov-tiles">
+          <div class="ov-tile">
+            <div class="ov-tile-head"><span class="ov-ic">✅</span> ทำได้ครบ <small>(2 คะแนน)</small></div>
+            <div class="ov-tile-num"><span id="ov-good">0</span><small class="ov-tile-pct" id="ov-good-pct">0%</small></div>
+            <div class="ov-tile-track"><span class="ov-tile-fill fill-good" id="ov-good-bar"></span></div>
+          </div>
+          <div class="ov-tile">
+            <div class="ov-tile-head"><span class="ov-ic">⚠️</span> ทำได้บางส่วน <small>(1 คะแนน)</small></div>
+            <div class="ov-tile-num"><span id="ov-mid">0</span><small class="ov-tile-pct" id="ov-mid-pct">0%</small></div>
+            <div class="ov-tile-track"><span class="ov-tile-fill fill-mid" id="ov-mid-bar"></span></div>
+          </div>
+          <div class="ov-tile">
+            <div class="ov-tile-head"><span class="ov-ic">❌</span> ทำไม่ได้ <small>(0 คะแนน)</small></div>
+            <div class="ov-tile-num"><span id="ov-bad">0</span><small class="ov-tile-pct" id="ov-bad-pct">0%</small></div>
+            <div class="ov-tile-track"><span class="ov-tile-fill fill-bad" id="ov-bad-bar"></span></div>
+          </div>
+        </div>
+      </div>
+      <div class="ov-strip" id="ov-strip"><div class="dist-empty">ยังไม่มีข้อมูลการประเมิน</div></div>
+    </section>
+
+    <!-- แนวโน้มคะแนนเฉลี่ย รายสัปดาห์ / รายเดือน -->
+    <section class="metric-card trend-panel" style="display:block; margin-bottom:22px;">
+      <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+        <div class="metric-label" style="font-size:1.05rem;"><i class="fa-solid fa-chart-line me-2"></i> แนวโน้มคะแนนเฉลี่ย (เต็ม 2)</div>
+        <div class="trend-toggle">
+          <button id="trend-week" class="trend-tab" onclick="setTrendMode('week')">รายสัปดาห์</button>
+          <button id="trend-month" class="trend-tab active" onclick="setTrendMode('month')">รายเดือน</button>
+        </div>
+      </div>
+      <div class="trend-sub" id="trend-sub">—</div>
+      <div id="trend-body" class="trend-body"><div class="trend-empty">— กำลังโหลด —</div></div>
+    </section>
+
+    <section class="directory-panel">
+      <div class="panel-head">
+        <div>
+          <h2 class="panel-title"><i class="fa-solid fa-clipboard-list text-primary me-2"></i> รายชื่อผู้ป่วย</h2>
+          <p class="panel-subtitle">ข้อมูลผู้ป่วยสำหรับรอบการฝึกวันนี้</p>
+        </div>
+        <div class="panel-actions">
+          <button class="btn btn-outline-primary btn-xl" onclick="openAddPatient()"><i class="fa-solid fa-user-plus"></i> เพิ่มผู้ป่วย</button>
+          <button class="btn btn-outline-secondary btn-xl" onclick="openHistory()"><i class="fa-solid fa-file-lines"></i> ประวัติ</button>
+        </div>
+      </div>
+      <div class="search-shell">
+        <span class="input-group-text"><i class="fa-solid fa-magnifying-glass"></i></span>
+        <input type="text" id="searchInput" class="form-control search-input" placeholder="ค้นหาชื่อ หรือ รหัส HN..." onkeyup="renderPatients()">
+      </div>
+      <div id="patient-list"></div>
+    </section>
+  </main>
+
+  <!-- ==================== Training Studio ==================== -->
+  <main id="view-training" class="training-shell d-none-h">
+    <aside class="training-rail">
+      <button onclick="goBack()" class="btn btn-outline-secondary btn-xl w-100 mb-3"><i class="fa-solid fa-arrow-left"></i> กลับหน้าหลัก</button>
+      <div class="rail-patient">
+        <div class="rail-label">ผู้ป่วยที่กำลังฝึก</div>
+        <h3 id="patient-display">-</h3>
+        <div id="patient-dx" class="hn-chip d-inline-block mb-2 d-none-h" style="background:#fff3f2;color:#b42318;border-color:#fecdca;"></div>
+        <div class="session-pill"><i class="fa-solid fa-floppy-disk"></i> บันทึกรอบนี้: <span id="session-count">0</span> รายการ</div>
+      </div>
+      <div class="rail-section-title">เมนูแบบฝึกหัด</div>
+      <div id="topic-menu"></div>
+    </aside>
+
+    <section class="training-workspace">
+      <div class="workspace-header">
+        <button class="btn speaker-btn flex-shrink-0" title="ฟังคำอธิบาย" onclick="speak(document.getElementById('topic-desc').innerText, ttsRate)"><i class="fa-solid fa-volume-high"></i></button>
+        <div class="workspace-title">
+          <h2 id="topic-title">1. การฝึกนวดกล้ามเนื้อริมฝีปาก</h2>
+          <p id="topic-desc">ให้ผู้ป่วยดูวิดีโอสาธิตและทำตามขั้นตอน</p>
+        </div>
+      </div>
+
+      <div class="workspace-body">
+        <div class="practice-panel">
+          <div id="video-section">
+            <div class="video-container"><iframe id="video-player" src="" frameborder="0" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>
+          </div>
+
+          <div id="audio-section" class="d-none-h">
+            <div class="audio-stage">
+              <div class="word-stage">
+                <div>
+                  <div class="word-stage-label">คำที่กำลังฝึก</div>
+                  <div class="word-illus d-none-h" id="word-illus" aria-hidden="true"></div>
+                  <div class="word-hero" id="current-word">-</div>
+                </div>
+              </div>
+              <div class="control-stack">
+                <button class="btn btn-primary btn-huge" onclick="speakCurrentWord()"><i class="fa-solid fa-volume-high"></i> ฟังเสียง</button>
+                <button id="mic-btn" class="btn btn-danger btn-huge" onclick="startListening()"><i class="fa-solid fa-microphone"></i> พูดตาม</button>
+                <div class="speed-control">
+                  <div class="text-muted fw-bold mb-2">ความเร็วเสียงต้นแบบ</div>
+                  <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-secondary" id="rate-slow" onclick="setRate(0.6,this)">ช้ามาก</button>
+                    <button type="button" class="btn btn-outline-secondary active" id="rate-normal" onclick="setRate(0.75,this)">ช้า</button>
+                    <button type="button" class="btn btn-outline-secondary" id="rate-fast" onclick="setRate(1,this)">ปกติ</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="vowel-media" class="d-none-h mb-4">
+              <div class="row justify-content-center">
+                <div class="col-lg-8">
+                  <div class="p-3 bg-light rounded-4 text-center">
+                    <small class="text-muted d-block mb-2"><i class="fa-solid fa-film"></i> วิดีโอสาธิตรูปปากการออกเสียง</small>
+                    <div class="ratio ratio-16x9 rounded-3 overflow-hidden"><iframe id="vowel-video" src="" frameborder="0" allow="encrypted-media" allowfullscreen></iframe></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="recognition-grid">
+              <div class="heard-card text-center">
+                <div>
+                  <small class="text-muted d-block">เสียงที่ระบบได้ยิน</small>
+                  <strong id="speech-output" class="fs-3 text-dark">-</strong>
+                </div>
+              </div>
+              <div id="eval-box" class="result-box d-none-h" aria-live="polite"></div>
+            </div>
+
+            <hr class="my-4">
+            <div class="word-tools">
+              <h5><i class="fa-solid fa-list-check text-primary me-2"></i> เลือกคำที่จะฝึก</h5>
+              <div class="d-flex gap-2">
+                <button class="btn btn-outline-primary btn-xl" onclick="stepWord(-1)"><i class="fa-solid fa-chevron-left"></i> ก่อนหน้า</button>
+                <button class="btn btn-outline-primary btn-xl" onclick="stepWord(1)">ถัดไป <i class="fa-solid fa-chevron-right"></i></button>
+              </div>
+            </div>
+            <div id="words-grid" class="word-grid"></div>
+          </div>
+        </div>
+
+        <div class="assessment-panel">
+          <h3 class="text-success mb-3"><i class="fa-solid fa-clipboard-check me-2"></i> บันทึกผลการฝึก</h3>
+          <label class="form-label fw-bold fs-5">ผลการประเมิน</label>
+          <div class="score-grid mb-4">
+            <div class="score-card" data-score="ทำไม่ได้ / ปรับปรุง" onclick="selectScore(this,'bad')"><span class="emoji">❌</span><span class="score-pts">0</span> ทำไม่ได้เลย</div>
+            <div class="score-card" data-score="ทำได้บางส่วน" onclick="selectScore(this,'mid')"><span class="emoji">⚠️</span><span class="score-pts">1</span> ทำได้บางส่วน</div>
+            <div class="score-card" data-score="ทำได้ดีเยี่ยม" onclick="selectScore(this,'good')"><span class="emoji">✅</span><span class="score-pts">2</span> ทำได้ครบ</div>
+          </div>
+          <label for="evalNote" class="form-label fw-bold fs-5">บันทึกเพิ่มเติมจากนักบำบัด</label>
+          <textarea class="form-control mb-4" id="evalNote" rows="2" placeholder="ผลการประเมินเสียงพูดจะขึ้นที่นี่โดยอัตโนมัติ (แก้ไขเพิ่มได้)"></textarea>
+          <button class="btn btn-success btn-huge" id="btn-save" onclick="saveAssessment()"><i class="fa-solid fa-floppy-disk"></i> บันทึกผลลงระบบ</button>
+        </div>
+      </div>
+    </section>
+  </main>
+  <!-- ==================== Modal: เพิ่มผู้ป่วย ==================== -->
+  <div class="modal fade" id="addPatientModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="border-radius:8px;">
+        <div class="modal-header"><h4 class="modal-title" id="patient-modal-title"><i class="fa-solid fa-user-plus text-primary me-2"></i> เพิ่มผู้ป่วยใหม่</h4><button class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+          <label class="form-label fw-bold">ชื่อ-นามสกุล <span class="text-danger">*</span></label>
+          <input id="pf-name" class="form-control mb-3 search-input" placeholder="เช่น นายสมชาย ใจดี">
+          <div class="row g-2 mb-3">
+            <div class="col-6"><label class="form-label fw-bold">อายุ (ปี)</label><input id="pf-age" type="number" class="form-control search-input" placeholder="65"></div>
+            <div class="col-6"><label class="form-label fw-bold">รหัส HN</label><input id="pf-hn" class="form-control search-input" placeholder="69-0004"></div>
+          </div>
+          <label class="form-label fw-bold">เลขบัตรประชาชน (CID) 13 หลัก</label>
+          <input id="pf-cid" class="form-control mb-3 search-input" inputmode="numeric" maxlength="13" placeholder="1XXXXXXXXXXXX">
+          <label class="form-label fw-bold">การวินิจฉัย (Diagnosis / Dx)</label>
+          <input id="pf-dx" class="form-control search-input" placeholder="เช่น อัมพฤกษ์ครึ่งซีกขวา, Stroke, Dysarthria">
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-light btn-xl" data-bs-dismiss="modal">ยกเลิก</button>
+          <button class="btn btn-primary btn-xl" onclick="submitPatient()"><i class="fa-solid fa-floppy-disk me-1"></i> บันทึกข้อมูล</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== Modal: เข้าสู่ระบบพยาบาล ==================== -->
+  <div class="modal fade" id="loginModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="border-radius:8px;">
+        <div class="modal-header"><h4 class="modal-title"><i class="fa-solid fa-user-nurse text-primary me-2"></i> เข้าสู่ระบบสำหรับพยาบาล</h4><button class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+          <label class="form-label fw-bold">ชื่อผู้ใช้</label>
+          <input id="login-user" class="form-control search-input mb-3" placeholder="username" autocomplete="username">
+          <label class="form-label fw-bold">รหัสผ่าน</label>
+          <input id="login-pass" type="password" class="form-control search-input" placeholder="password" autocomplete="current-password" onkeydown="if(event.key==='Enter') nurseLogin()">
+          <div id="login-error" class="text-danger fw-bold mt-3 d-none-h"><i class="fa-solid fa-triangle-exclamation"></i> ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง</div>
+          <div class="helper-line mt-3" style="font-size:.9rem;"><i class="fa-solid fa-circle-info"></i> ทดลอง: nurse / 1234 หรือ admin / admin</div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-light btn-xl" data-bs-dismiss="modal">ยกเลิก</button>
+          <button class="btn btn-primary btn-xl" onclick="nurseLogin()">เข้าสู่ระบบ</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== Modal: ประวัติการฝึก ==================== -->
+  <div class="modal fade" id="historyModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+      <div class="modal-content" style="border-radius:8px;">
+        <div class="modal-header">
+          <h4 class="modal-title"><i class="fa-solid fa-file-lines text-secondary me-2"></i> ประวัติการฝึกและประเมิน</h4>
+          <button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="d-flex gap-2 mb-3 flex-wrap">
+            <button class="btn btn-success btn-xl" onclick="exportCSV()"><i class="fa-solid fa-file-excel me-1"></i> ดาวน์โหลด Excel/CSV</button>
+            <button class="btn btn-outline-danger btn-xl" onclick="clearHistory()"><i class="fa-solid fa-trash me-1"></i> ล้างประวัติการฝึก</button>
+          </div>
+          <div class="modal-scroll">
+            <table class="table table-striped align-middle">
+              <thead><tr><th>วัน-เวลา</th><th>ผู้ป่วย</th><th>HN</th><th>หัวข้อ</th><th>ผล</th><th>คะแนน</th><th>ผู้บันทึก</th><th>หมายเหตุ</th></tr></thead>
+              <tbody id="history-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== Modal: ความก้าวหน้ารายเดือน ==================== -->
+  <div class="modal fade" id="progressModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+      <div class="modal-content" style="border-radius:8px;">
+        <div class="modal-header">
+          <h4 class="modal-title"><i class="fa-solid fa-chart-line text-success me-2"></i> ความก้าวหน้าของผู้ป่วยรายเดือน</h4>
+          <button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <label class="form-label fw-bold fs-5"><i class="fa-solid fa-user me-1 text-primary"></i> เลือกผู้ป่วย</label>
+          <select id="prog-patient" class="form-select search-input mb-4" onchange="renderProgress()"></select>
+          <div id="progress-content"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+  /* ============================================================================
+     ⚙️ ตั้งค่า: วาง URL ของ Google Apps Script Web App ที่ Deploy แล้วตรงนี้
+        (ดูวิธีทำในไฟล์ GoogleAppsScript-API.gs)
+        ถ้าเว้นว่าง "" ระบบจะทำงานแบบออฟไลน์ (บันทึกในเครื่องอย่างเดียว)
+     ============================================================================ */
+  const GOOGLE_SCRIPT_URL = "";   // ← ตัวอย่าง: "https://script.google.com/macros/s/AKfycb.../exec"
+
+  /* -------------------- ฐานข้อมูลผู้ป่วยเริ่มต้น (ฝังในไฟล์) -------------------- */
+  // 👩‍⚕️ บัญชีพยาบาล/เจ้าหน้าที่ (ระบบล็อกอินเบื้องต้นฝั่งหน้าเว็บ — แก้ไข/เพิ่มบัญชีได้ที่นี่)
+  const NURSE_ACCOUNTS = [
+    { user: "nurse", pass: "1234",  name: "พยาบาลเวร" },
+    { user: "admin", pass: "admin", name: "ผู้ดูแลระบบ" }
+  ];
+
+  const DEFAULT_PATIENTS = [
+    { id:"P001", name:"นายสมชาย ใจดี",      age:65, HN:"69-0001", cid:"1100200300401", dx:"อัมพฤกษ์ครึ่งซีกขวา (Right hemiparesis)" },
+    { id:"P002", name:"นางสมศรี มีสุข",      age:58, HN:"69-0002", cid:"1100200300502", dx:"เส้นเลือดสมองตีบ (Ischemic stroke)" },
+    { id:"P003", name:"นายสมศักดิ์ รักเรียน", age:70, HN:"69-0003", cid:"1100200300603", dx:"ภาวะพูดไม่ชัด (Dysarthria)" }
+  ];
+
+  /* -------------------- ข้อมูลหัวข้อฝึก (คงเดิมทุกอย่าง) -------------------- */
+  const topicsData = {
+    1:{ title:"1. การฝึกนวดกล้ามเนื้อริมฝีปาก", desc:"ผู้ป่วยดูวิดีโอสาธิตและทำการนวดเบาๆ รอบริมฝีปากเพื่อกระตุ้นเส้นประสาท", video:"https://www.youtube.com/embed/dsuRgwfME0I?si=EFRDsHF1uEj0YLW7", hasAudio:false },
+    2:{ title:"2. การบริหารริมฝีปากและแก้ม", desc:"ฝึกอมลมแก้มป่อง และสลับซ้ายขวา เพื่อเพิ่มความแข็งแรงของกล้ามเนื้อแก้ม", video:"https://www.youtube.com/embed/2MjWcyfYm6Y?si=14QjU1Jn1AKegYuj", hasAudio:false },
+    3:{ title:"3. การฝึกบริหารลิ้น", desc:"ฝึกแลบลิ้นตรง, แตะมุมปากซ้าย-ขวา และดุนกระพุ้งแก้มเพื่อเพิ่มแรงของลิ้น", video:"https://www.youtube.com/embed/8lXpm3JaXEA?si=-4-jKQl-o_r2Qp_F", hasAudio:false },
+    4:{ title:"4. การฝึกออกเสียงสระ", desc:"ให้กดเลือกสระ ฟังเสียงต้นแบบ ดูวิดีโอสาธิตรูปปาก แล้วอ้าปากออกเสียงตามยาวๆ ให้ชัดเจน", hasAudio:true,
+        wordsDetail:[
+          { w:"อา",  embedv:"https://www.youtube.com/embed/2aq8JvFb7Fg?si=vCOFi49Il2nEszJ0" },
+          { w:"อี",  embedv:"https://www.youtube.com/embed/rlAKrGWVkng?si=5FztcKp02323Mry0" },
+          { w:"อู",  embedv:"https://www.youtube.com/embed/B1YJsJfNtNo?si=vi2e9a2bn-LDSeNT" },
+          { w:"โอ",  embedv:"https://www.youtube.com/embed/zLn5McnQVzM?si=mY--dyCSjCiVB9Cn" },
+          { w:"เอ",  embedv:"https://www.youtube.com/embed/YT8LTPQ8txc?si=8ZR-q66zgwyB2F9X" },
+          { w:"แอ",  embedv:"https://www.youtube.com/embed/XLtVkpWF8eE?si=w36q98GEIublQkqc" },
+          { w:"อือ", embedv:"https://www.youtube.com/embed/rfuxwYSnLHk?si=vP95dXC75Y1rJ6tv" },
+          { w:"เออ", embedv:"https://www.youtube.com/embed/2Zz04sKRVhQ?si=QQdsWrAQkyBqrJE8" }
+        ],
+        words:["อา","อี","อู","โอ","เอ","แอ","อือ","เออ"] },
+    5:{ title:"5. การฝึกพูดคำพื้นฐาน", desc:"ฝึกฝนการออกเสียงหมวดคำพื้นฐาน นับเลข วัน เดือน และหมวดอวัยวะ", hasAudio:true,
+        groups:[
+          { name:"ตัวเลข 1–10",   icon:"fa-hashtag",       words:["หนึ่ง","สอง","สาม","สี่","ห้า","หก","เจ็ด","แปด","เก้า","สิบ"] },
+          { name:"วันในสัปดาห์",   icon:"fa-calendar-day",  words:["วันจันทร์","วันอังคาร","วันพุธ","วันพฤหัสบดี","วันศุกร์","วันเสาร์","วันอาทิตย์"] },
+          { name:"เดือน",         icon:"fa-calendar-days", words:["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"] },
+          { name:"อวัยวะบนใบหน้า", icon:"fa-face-smile",    words:["ตา","หู","จมูก","ปาก","แก้ม","ลิ้น"] }
+        ],
+        words:["หนึ่ง","สอง","สาม","สี่","ห้า","หก","เจ็ด","แปด","เก้า","สิบ","วันจันทร์","วันอังคาร","วันพุธ","วันพฤหัสบดี","วันศุกร์","วันเสาร์","วันอาทิตย์","มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม","ตา","หู","จมูก","ปาก","แก้ม","ลิ้น"] },
+    6:{ title:"6. ฝึกพูดเป็นประโยคต่างๆ", desc:"ฝึกพูดประโยคสั้นๆ ที่ใช้สื่อสารบ่อยในชีวิตประจำวันอย่างเป็นธรรมชาติ", hasAudio:true,
+        words:["สวัสดีครับ","สวัสดีค่ะ","หิวน้ำอยากดื่มน้ำ","หิวข้าวอยากกินข้าว","สบายดีไหมครับ","วันนี้สบายดี","จะนอนหลับแล้ว","นอนหลับสบาย","อยากออกไปเที่ยว","ขอบคุณมากครับ","ขอบคุณมากค่ะ"] }
+  };
+
+  /* -------------------- ภาพประกอบคำ (อีโมจิ) สำหรับหัวข้อ 5: การฝึกพูดคำพื้นฐาน -------------------- */
+  const WORD_IMAGES = {
+    // ตัวเลข 1–10
+    "หนึ่ง":"1️⃣","สอง":"2️⃣","สาม":"3️⃣","สี่":"4️⃣","ห้า":"5️⃣",
+    "หก":"6️⃣","เจ็ด":"7️⃣","แปด":"8️⃣","เก้า":"9️⃣","สิบ":"🔟",
+    // วันในสัปดาห์ (ใช้สีประจำวันแบบไทย)
+    "วันจันทร์":"🟡","วันอังคาร":"🩷","วันพุธ":"🟢","วันพฤหัสบดี":"🟠",
+    "วันศุกร์":"🔵","วันเสาร์":"🟣","วันอาทิตย์":"🔴",
+    // เดือน (ใช้สัญลักษณ์เทศกาล/ฤดูกาลของแต่ละเดือน)
+    "มกราคม":"🎉","กุมภาพันธ์":"💗","มีนาคม":"🌷","เมษายน":"💦",
+    "พฤษภาคม":"🌾","มิถุนายน":"🌧️","กรกฎาคม":"🕯️","สิงหาคม":"🌺",
+    "กันยายน":"🍃","ตุลาคม":"🌊","พฤศจิกายน":"🏮","ธันวาคม":"🎄",
+    // อวัยวะบนใบหน้า
+    "ตา":"👁️","หู":"👂","จมูก":"👃","ปาก":"👄","แก้ม":"😊","ลิ้น":"👅"
+  };
+
+  /* -------------------- สถานะระบบ -------------------- */
+  let patients = [];
+  let currentPatient = null;
+  let currentTopicNum = 1;
+  let currentTopicName = topicsData[1].title;
+  let selectedWord = "";
+  let currentWordList = [];     // รายการคำของหัวข้อปัจจุบัน (ไว้ทำปุ่มก่อนหน้า/ถัดไป)
+  let selectedScore = "";
+  let pendingScoreValue = null;   // คะแนน 0–100 ของรายการที่กำลังจะบันทึก (อัตโนมัติ/เลือกเอง)
+  let spokenLog = [];             // ผลการพูดสะสมในหัวข้อนี้ (ไว้สรุปลงบันทึก + คะแนนเฉลี่ย)
+  let ttsRate = 0.75;
+  let sessionCount = 0;
+  let currentNurse = null;              // ชื่อพยาบาลที่ล็อกอินอยู่ (null = ยังไม่ล็อกอิน)
+  let trainingReturnView = "view-landing";
+  let editingId = null;                 // id ผู้ป่วยที่กำลังแก้ไข (null = เพิ่มใหม่)
+  const LS_PATIENTS = "stroke_app_patients_v2";
+  const LS_HISTORY  = "stroke_app_history";
+
+  /* ============================================================================
+     เริ่มต้นระบบ
+     ============================================================================ */
+  window.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('current-date').innerText =
+      new Date().toLocaleDateString('th-TH', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+    updateConnBadge();
+    updateRoleBadge();
+    loadPatients();
+    warmUpVoices();
+    syncPatientsFromCloud();               // ดึงรายชื่อล่าสุดจาก Google Sheets (ถ้าเชื่อมไว้)
+    showView('view-landing');              // เริ่มที่หน้าคนไข้ค้นหาตัวเอง (ไม่ต้องล็อกอิน)
+    const ls = document.getElementById('landing-search'); if (ls) ls.focus();
+  });
+
+  function updateConnBadge(){
+    const b = document.getElementById('conn-badge');
+    if (!b) return;
+    if (GOOGLE_SCRIPT_URL) {
+      b.className = "badge badge-pill bg-white text-success px-3 py-2 fw-bold";
+      b.innerHTML = '<i class="fa-solid fa-cloud"></i> เชื่อม Google Sheets';
+    } else {
+      // ตัดการแสดงโหมดออฟไลน์ออก — ไม่แสดงป้ายสถานะเมื่อยังไม่ได้เชื่อม Sheets
+      b.className = "badge badge-pill bg-white text-secondary px-3 py-2 fw-bold d-none-h";
+      b.innerHTML = "";
+    }
+  }
+
+  /* ============================================================================
+     ผู้ป่วย
+     ============================================================================ */
+  function loadPatients(){
+    let stored = null;
+    try { stored = JSON.parse(localStorage.getItem(LS_PATIENTS) || "null"); } catch(e){}
+    if (!Array.isArray(stored) || stored.length === 0){
+      stored = DEFAULT_PATIENTS.slice();
+      localStorage.setItem(LS_PATIENTS, JSON.stringify(stored));
+    }
+    patients = stored.map(normalizePatient);
+    renderPatients();
+    updateDashboardCounts();
+  }
+
+  function normalizePatient(p){
+    return { id:String(p.id||"").trim(), name:String(p.name||"").trim(),
+             age:(p.age===0?0:(p.age||"")), HN:String(p.HN||p.hn||"").trim(),
+             cid:String(p.cid||"").trim(), dx:String(p.dx||"").trim() };
+  }
+  function savePatientsLocal(){ localStorage.setItem(LS_PATIENTS, JSON.stringify(patients)); }
+  function upsertPatientLocal(p){
+    const idx = patients.findIndex(x => x.id === p.id);
+    if (idx >= 0) patients[idx] = p; else patients.push(p);
+    savePatientsLocal();
+  }
+  function genPatientId(){
+    let max = 0;
+    patients.forEach(p => { const m = /^P(\d+)$/.exec(p.id); if (m) max = Math.max(max, parseInt(m[1],10)); });
+    return "P" + String(max + 1).padStart(3,'0');
+  }
+  function escapeHtml(s){ return String(s==null?"":s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  /* ---- ซิงก์รายชื่อผู้ป่วยกับ Google Sheets (ถ้าตั้งค่า URL) → ค้นหาข้ามเครื่องได้ ---- */
+  async function syncPatientsFromCloud(){
+    if (!GOOGLE_SCRIPT_URL) return false;
+    try {
+      const res = await jsonp({ action:"getpatients" });
+      if (res && res.status === "success" && Array.isArray(res.patients) && res.patients.length){
+        patients = res.patients.map(normalizePatient);
+        savePatientsLocal();
+        if (!document.getElementById('view-dashboard').classList.contains('d-none-h')){ renderPatients(); updateDashboardCounts(); }
+        return true;
+      }
+    } catch(e){ /* ออฟไลน์ → ใช้ข้อมูลในเครื่อง */ }
+    return false;
+  }
+  function cloudSavePatient(p){ if (GOOGLE_SCRIPT_URL) jsonp({ action:"savepatient", id:p.id, name:p.name, age:p.age, hn:p.HN, cid:p.cid, dx:p.dx }).catch(()=>{}); }
+  function cloudDeletePatient(id){ if (GOOGLE_SCRIPT_URL) jsonp({ action:"deletepatient", id:id }).catch(()=>{}); }
+
+  /* ---- การ์ดผู้ป่วย (ใช้ได้ทั้งหน้าพยาบาล 'nurse' และหน้าคนไข้ค้นหา 'landing') ---- */
+  function patientCardHTML(p, context){
+    const history = getHistory();
+    const todayStr = new Date().toDateString();
+    const doneToday = history.some(h => h.patientId === p.id && new Date(h.ts).toDateString() === todayStr);
+    const letter = (p.name||"P").replace(/นาย|นางสาว|นาง|เด็กชาย|เด็กหญิง/g,"").trim().substring(0,1) || "P";
+    const status = doneToday
+      ? '<span class="status-done"><i class="fa-solid fa-check me-1"></i>ประเมินแล้ววันนี้</span>'
+      : '<span class="status-wait"><i class="fa-regular fa-clock me-1"></i>รอรับการประเมิน</span>';
+    const dxChip  = p.dx ? `<span class="hn-chip" style="background:#fff3f2;color:#b42318;border-color:#fecdca;"><i class="fa-solid fa-stethoscope me-1"></i>${escapeHtml(p.dx)}</span>` : '';
+    const cidChip = (context==='nurse' && p.cid) ? `<span class="text-muted">CID: ${escapeHtml(p.cid)}</span>` : '';
+    const actions = context === 'nurse'
+      ? `<button class="btn btn-primary btn-xl" onclick="enterTrainingById('${p.id}','view-dashboard')">เริ่มการฝึก <i class="fa-solid fa-chevron-right ms-1"></i></button>
+         <button class="btn btn-outline-secondary btn-xl" title="ดูความก้าวหน้ารายเดือน" onclick="openProgress('${p.id}')"><i class="fa-solid fa-chart-line"></i></button>
+         <button class="btn btn-outline-secondary btn-xl" title="แก้ไขข้อมูล" onclick="openEditPatient('${p.id}')"><i class="fa-solid fa-pen"></i></button>
+         <button class="btn btn-outline-danger btn-xl" title="ลบ" onclick="deletePatient('${p.id}')"><i class="fa-solid fa-trash"></i></button>`
+      : `<button class="btn btn-primary btn-xl" onclick="enterTrainingById('${p.id}','view-landing')">นี่คือฉัน เริ่มฝึก <i class="fa-solid fa-chevron-right ms-1"></i></button>`;
+    return `<div class="patient-card">
+      <div class="patient-row">
+        <div class="avatar-icon">${letter}</div>
+        <div class="patient-info">
+          <div class="patient-name">${escapeHtml(p.name)}</div>
+          <div class="patient-meta"><span>อายุ ${p.age||"-"} ปี</span><span class="hn-chip">HN ${escapeHtml(p.HN||"-")}</span>${cidChip}</div>
+          <div class="d-flex flex-wrap gap-2 align-items-center mt-1">${dxChip}${context==='nurse'?status:''}</div>
+        </div>
+        <div class="patient-actions">${actions}</div>
+      </div>
+    </div>`;
+  }
+
+  /* ============================================================================
+     ตารางรายชื่อผู้ป่วย — รองรับคนไข้จำนวนมาก
+     (ค้นหา + ชิปกรองสถานะ + กรอง Dx + เรียงคอลัมน์ + คอลัมน์ประเมินล่าสุด + แบ่งหน้า + compact)
+     ============================================================================ */
+  let roster = { status:'all', dx:'', sortKey:'status', sortDir:1, page:1, pageSize:20, compact:false };
+
+  function rosterSetStatus(s){ roster.status = s; roster.page = 1; renderPatients(); }
+  function rosterSetDx(v){ roster.dx = v; roster.page = 1; renderPatients(); }
+  function rosterSort(key){
+    if (roster.sortKey === key) roster.sortDir *= -1;
+    else { roster.sortKey = key; roster.sortDir = 1; }
+    renderPatients();
+  }
+  function rosterPage(p){ roster.page = p; renderPatients(); }
+  function rosterPageSize(n){ roster.pageSize = Number(n) || 20; roster.page = 1; renderPatients(); }
+  function rosterToggleCompact(){ roster.compact = !roster.compact; renderPatients(); }
+
+  function pageButtons(cur, pages){
+    const btn = n => `<button class="roster-pg ${n===cur?'active':''}" onclick="rosterPage(${n})">${n}</button>`;
+    const dots = '<span class="roster-dots">…</span>';
+    if (pages <= 7){ let s=''; for (let i=1;i<=pages;i++) s += btn(i); return s; }
+    let s = btn(1);
+    const lo = Math.max(2, cur-1), hi = Math.min(pages-1, cur+1);
+    if (lo > 2) s += dots;
+    for (let i=lo;i<=hi;i++) s += btn(i);
+    if (hi < pages-1) s += dots;
+    return s + btn(pages);
+  }
+
+  function renderPatients(){
+    const list = document.getElementById('patient-list');
+    if (!list) return;
+    const kw = (document.getElementById('searchInput').value || "").toLowerCase();
+    const history = getHistory();
+    const todayStr = new Date().toDateString();
+    const now = Date.now();
+
+    // ทำดัชนีประวัติตามผู้ป่วย (ครั้งเดียว) แล้วสรุปสถานะล่าสุดของแต่ละคน
+    const byId = {};
+    history.forEach(h => { (byId[h.patientId] || (byId[h.patientId] = [])).push(h); });
+    const infoOf = p => {
+      const hs = (byId[p.id] || []).slice().sort((a,b) => a.ts - b.ts);
+      const last = hs.length ? hs[hs.length-1] : null;
+      return {
+        done: hs.some(h => new Date(h.ts).toDateString() === todayStr),
+        lastTs: last ? last.ts : 0,
+        lastPts: last ? histPoints(last) : null
+      };
+    };
+
+    const dxSet = Array.from(new Set(patients.map(p => (p.dx||'').trim()).filter(Boolean))).sort();
+
+    // ค้นหา + กรอง Dx → pool
+    const pool = patients.filter(p => {
+      const matchKw = !kw || p.name.toLowerCase().includes(kw) || (p.HN||"").toLowerCase().includes(kw) || (p.cid||"").includes(kw) || (p.dx||"").toLowerCase().includes(kw);
+      const matchDx = !roster.dx || (p.dx||'') === roster.dx;
+      return matchKw && matchDx;
+    }).map(p => ({ p, info: infoOf(p) }));
+
+    const cAll = pool.length;
+    const cWait = pool.filter(x => !x.info.done).length;
+    const cDone = pool.filter(x => x.info.done).length;
+    const cFail = pool.filter(x => x.info.lastPts === 0).length;
+
+    // กรองสถานะ
+    let rows = pool.filter(x =>
+      roster.status === 'waiting' ? !x.info.done :
+      roster.status === 'done'    ?  x.info.done :
+      roster.status === 'fail'    ?  x.info.lastPts === 0 : true);
+
+    // เรียง
+    const cmp = {
+      name:     (a,b) => a.p.name.localeCompare(b.p.name, 'th'),
+      age:      (a,b) => (Number(a.p.age)||0) - (Number(b.p.age)||0),
+      score:    (a,b) => ((a.info.lastPts==null?-1:a.info.lastPts) - (b.info.lastPts==null?-1:b.info.lastPts)),
+      assessed: (a,b) => a.info.lastTs - b.info.lastTs,
+      status:   (a,b) => ((a.info.done?1:0) - (b.info.done?1:0)) || a.p.name.localeCompare(b.p.name, 'th')
+    }[roster.sortKey] || (() => 0);
+    rows.sort((a,b) => cmp(a,b) * roster.sortDir);
+
+    // แบ่งหน้า
+    const total = rows.length, size = roster.pageSize;
+    const pages = Math.max(1, Math.ceil(total / size));
+    if (roster.page > pages) roster.page = pages;
+    if (roster.page < 1) roster.page = 1;
+    const start = (roster.page - 1) * size;
+    const pageRows = rows.slice(start, start + size);
+
+    // ---- สร้าง HTML ----
+    const chip = (key, label, count, cls) =>
+      `<button class="roster-chip ${cls} ${roster.status===key?'active':''}" onclick="rosterSetStatus('${key}')">${label} <span class="roster-chip-n">${count}</span></button>`;
+    const dxOptions = ['<option value="">ทุกการวินิจฉัย</option>']
+      .concat(dxSet.map(d => `<option value="${escapeHtml(d)}" ${roster.dx===d?'selected':''}>${escapeHtml(d)}</option>`)).join("");
+    const sizeOptions = [10,20,50,100].map(n => `<option value="${n}" ${roster.pageSize===n?'selected':''}>${n} แถว/หน้า</option>`).join("");
+    const th = (key, label, cls) => {
+      const active = roster.sortKey===key;
+      const caret = active ? (roster.sortDir>0?'<i class="fa-solid fa-caret-up ms-1"></i>':'<i class="fa-solid fa-caret-down ms-1"></i>') : '<i class="fa-solid fa-sort ms-1 opacity-25"></i>';
+      return `<th class="pt-sort ${cls||''} ${active?'is-active':''}" onclick="rosterSort('${key}')">${label}${caret}</th>`;
+    };
+    const from = total ? start+1 : 0, to = Math.min(start+size, total);
+
+    list.innerHTML = `
+      <div class="roster-toolbar">
+        <div class="roster-chips">
+          ${chip('all','ทั้งหมด',cAll,'c-all')}
+          ${chip('waiting','รอประเมิน',cWait,'c-wait')}
+          ${chip('done','ประเมินแล้ว',cDone,'c-done')}
+          ${chip('fail','ไม่ผ่าน',cFail,'c-fail')}
+        </div>
+        <div class="roster-controls">
+          <select class="roster-select" onchange="rosterSetDx(this.value)" title="กรองตามการวินิจฉัย">${dxOptions}</select>
+          <button class="roster-btn ${roster.compact?'active':''}" onclick="rosterToggleCompact()" title="สลับความหนาแน่นของตาราง"><i class="fa-solid fa-table-list"></i> ${roster.compact?'มุมมองปกติ':'มุมมองกระชับ'}</button>
+          <select class="roster-select" onchange="rosterPageSize(this.value)" title="จำนวนต่อหน้า">${sizeOptions}</select>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="table pt-table ${roster.compact?'pt-compact':''} align-middle">
+          <thead><tr>
+            ${th('name','ผู้ป่วย')}
+            ${th('age','อายุ','text-center')}
+            <th>การวินิจฉัย (Dx)</th>
+            ${th('score','ผลล่าสุด','text-center')}
+            ${th('assessed','ประเมินล่าสุด')}
+            <th class="text-end">จัดการ</th>
+          </tr></thead>
+          <tbody>${ pageRows.length ? pageRows.map(x => patientRowHTML(x.p, x.info, now)).join("") : '<tr><td colspan="6" class="text-center text-muted py-4">ไม่พบผู้ป่วยตามเงื่อนไข</td></tr>' }</tbody>
+        </table>
+      </div>
+      <div class="roster-pager">
+        <div class="roster-count">แสดง ${from}–${to} จาก ${total} คน</div>
+        <div class="roster-pages">
+          <button class="roster-pg" ${roster.page<=1?'disabled':''} onclick="rosterPage(${roster.page-1})"><i class="fa-solid fa-chevron-left"></i></button>
+          ${pageButtons(roster.page, pages)}
+          <button class="roster-pg" ${roster.page>=pages?'disabled':''} onclick="rosterPage(${roster.page+1})"><i class="fa-solid fa-chevron-right"></i></button>
+        </div>
+      </div>`;
+  }
+
+  // แถวในตารางรายชื่อ (กดทั้งแถวเพื่อเข้าห้องฝึกของผู้ป่วยรายนั้น)
+  function patientRowHTML(p, info, now){
+    info = info || {};
+    now = now || Date.now();
+    const letter = (p.name||"P").replace(/นาย|นางสาว|นาง|เด็กชาย|เด็กหญิง/g,"").trim().substring(0,1) || "P";
+    const lastPts = (info.lastPts === undefined ? null : info.lastPts);
+    let scoreCell = '<span class="text-muted">—</span>';
+    if (lastPts != null){ const li = levelInfo(lastPts); scoreCell = `<span class="hist-badge hist-${li.color}">${li.emoji} ${lastPts}/2</span>`; }
+    const dx = p.dx ? escapeHtml(p.dx) : '<span class="text-muted">—</span>';
+    let assessedCell = '<span class="text-muted">ยังไม่เคยประเมิน</span>';
+    if (info.lastTs){
+      const days = Math.floor((now - info.lastTs) / 86400000);
+      const dstr = new Date(info.lastTs).toLocaleDateString('th-TH', { day:'numeric', month:'short', year:'numeric' });
+      const ago = days <= 0 ? 'วันนี้' : days === 1 ? 'เมื่อวาน' : days + ' วันก่อน';
+      const overdue = (days >= 7 && !info.done) ? ' pt-overdue' : '';
+      assessedCell = `<div class="pt-when">${dstr}</div><small class="pt-ago${overdue}">${ago}</small>`;
+    }
+    const rowCls = lastPts === 0 ? 'pt-tr pt-fail' : 'pt-tr';
+    return `<tr class="${rowCls}" onclick="enterTrainingById('${p.id}','view-dashboard')" title="กดเพื่อเข้าห้องฝึกของผู้ป่วยรายนี้">
+      <td>
+        <div class="pt-cell-name">
+          <div class="avatar-icon avatar-sm">${letter}</div>
+          <div>
+            <div class="pt-name">${escapeHtml(p.name)}</div>
+            <span class="hn-chip">HN ${escapeHtml(p.HN||'-')}</span>
+          </div>
+        </div>
+      </td>
+      <td class="text-center fw-bold">${p.age||'-'}</td>
+      <td>${dx}</td>
+      <td class="text-center">${scoreCell}</td>
+      <td>${assessedCell}</td>
+      <td class="pt-actions text-end" onclick="event.stopPropagation()">
+        <button class="btn btn-primary pt-btn" onclick="enterTrainingById('${p.id}','view-dashboard')">เริ่มฝึก <i class="fa-solid fa-chevron-right"></i></button>
+        <button class="btn btn-outline-secondary pt-btn" title="ความก้าวหน้า" onclick="openProgress('${p.id}')"><i class="fa-solid fa-chart-line"></i></button>
+        <button class="btn btn-outline-secondary pt-btn" title="แก้ไขข้อมูล" onclick="openEditPatient('${p.id}')"><i class="fa-solid fa-pen"></i></button>
+        <button class="btn btn-outline-danger pt-btn" title="ลบ" onclick="deletePatient('${p.id}')"><i class="fa-solid fa-trash"></i></button>
+      </td>
+    </tr>`;
+  }
+
+  function updateDashboardCounts(){
+    const history = getHistory();
+    const todayStr = new Date().toDateString();
+    const assessedTodayIds = new Set(history.filter(h => new Date(h.ts).toDateString() === todayStr).map(h => h.patientId));
+    document.getElementById('count-total').innerText = patients.length;
+    document.getElementById('count-done').innerText  = assessedTodayIds.size;
+    const waitCount = Math.max(0, patients.length - assessedTodayIds.size);
+    document.getElementById('count-wait').innerText  = waitCount;
+    const waitVisual = document.getElementById('count-wait-visual');
+    if (waitVisual) waitVisual.innerText = waitCount;
+    renderFollowup();
+  }
+
+  /* ============================================================================
+     ผู้ป่วยที่ประเมินแล้ว "ไม่ผ่าน" (ผลล่าสุด = 0) → ต้องติดตามเร่งด่วน
+     ============================================================================ */
+  function renderFollowup(){
+    const wrap = document.getElementById('followup-panel');
+    const listEl = document.getElementById('followup-list');
+    if (!wrap || !listEl) return;
+    const history = getHistory();
+    const urgent = [];
+    patients.forEach(p => {
+      const hs = history.filter(h => h.patientId === p.id).sort((a,b) => a.ts - b.ts);
+      if (!hs.length) return;
+      const last = hs[hs.length - 1];
+      if (histPoints(last) <= 0) urgent.push({ p, last });   // ผลประเมินล่าสุด = ไม่ผ่าน
+    });
+    const countEl = document.getElementById('followup-count');
+    if (countEl) countEl.innerText = urgent.length;
+    if (!urgent.length){
+      wrap.classList.remove('followup-active');
+      listEl.innerHTML = '<div class="text-center text-muted py-3"><i class="fa-solid fa-circle-check text-success me-2"></i>ไม่มีผู้ป่วยที่ต้องติดตามเร่งด่วน — ผลประเมินล่าสุดผ่านทุกคน</div>';
+      return;
+    }
+    wrap.classList.add('followup-active');
+    listEl.innerHTML = urgent
+      .sort((a,b) => b.last.ts - a.last.ts)
+      .map(({p,last}) => {
+        const when = new Date(last.ts).toLocaleDateString('th-TH', { day:'numeric', month:'short', year:'numeric' });
+        const dxTxt = p.dx ? ` · ${escapeHtml(p.dx)}` : '';
+        return `<div class="followup-card">
+          <div>
+            <div class="followup-name"><i class="fa-solid fa-triangle-exclamation text-danger me-1"></i> ${escapeHtml(p.name)} <span class="hn-chip">HN ${escapeHtml(p.HN||'-')}</span></div>
+            <div class="text-muted" style="font-size:.9rem;">ผลล่าสุด: <b class="text-danger">ไม่ผ่าน (0/2)</b> · ${when} · ${escapeHtml((last.topic||'').split(' (')[0])}${dxTxt}</div>
+          </div>
+          <button class="btn btn-danger btn-xl" onclick="enterTrainingById('${p.id}','view-dashboard')">ติดตาม/ฝึกซ้ำ <i class="fa-solid fa-chevron-right ms-1"></i></button>
+        </div>`;
+      }).join("");
+  }
+
+  /* ============================================================================
+     คนไข้ค้นหาตัวเอง (หน้าแรก ไม่ต้องล็อกอิน)
+     ============================================================================ */
+  function matchPatient(p, q){
+    const ql = q.toLowerCase();
+    const qDigits = q.replace(/\D/g,'');
+    const nameMatch = p.name.toLowerCase().includes(ql);
+    const hnMatch   = (p.HN||'').toLowerCase().includes(ql);
+    const cidMatch  = qDigits.length >= 4 && (p.cid||'').replace(/\D/g,'').includes(qDigits);
+    return nameMatch || hnMatch || cidMatch;
+  }
+  async function patientSearch(){
+    const q = document.getElementById('landing-search').value.trim();
+    const box = document.getElementById('landing-result');
+    if (!q){ box.innerHTML = '<div class="helper-line">กรุณาพิมพ์ชื่อ-สกุล หรือเลขบัตรประชาชนก่อนค้นหาครับ</div>'; return; }
+    box.innerHTML = '<div class="text-center text-muted py-3"><span class="spinner-border spinner-border-sm me-2"></span> กำลังค้นหา...</div>';
+    await syncPatientsFromCloud();
+    const matches = patients.filter(p => matchPatient(p, q));
+    if (matches.length === 0){
+      box.innerHTML = '<div class="result-box result-mid">ไม่พบข้อมูลของคุณในระบบ<br><span class="fw-normal">กรุณาติดต่อพยาบาลเพื่อลงทะเบียนก่อนนะครับ</span></div>';
+      return;
+    }
+    if (matches.length === 1){ enterTrainingById(matches[0].id, 'view-landing'); return; }
+    box.innerHTML = '<div class="fw-bold mb-2">พบ '+matches.length+' รายชื่อ กรุณาเลือกชื่อของคุณ:</div>' + matches.map(p => patientCardHTML(p, 'landing')).join("");
+  }
+
+  /* ============================================================================
+     พยาบาล — ล็อกอิน / ล็อกเอาต์
+     ============================================================================ */
+  function updateRoleBadge(){
+    const b = document.getElementById('role-badge');
+    if (!b) return;
+    if (currentNurse){ b.className = "badge badge-pill bg-white text-primary px-3 py-2 fw-bold"; b.innerHTML = '<i class="fa-solid fa-user-nurse"></i> '+escapeHtml(currentNurse); }
+    else { b.className = "badge badge-pill bg-white text-primary px-3 py-2 fw-bold d-none-h"; }
+  }
+  function openNurseLogin(){
+    document.getElementById('login-error').classList.add('d-none-h');
+    document.getElementById('login-user').value = "";
+    document.getElementById('login-pass').value = "";
+    new bootstrap.Modal('#loginModal').show();
+    setTimeout(()=>document.getElementById('login-user').focus(), 300);
+  }
+  function nurseLogin(){
+    const u = document.getElementById('login-user').value.trim();
+    const p = document.getElementById('login-pass').value;
+    const acc = NURSE_ACCOUNTS.find(a => a.user === u && a.pass === p);
+    if (!acc){ document.getElementById('login-error').classList.remove('d-none-h'); return; }
+    currentNurse = acc.name;
+    const nn = document.getElementById('nurse-name'); if (nn) nn.innerText = acc.name;
+    updateRoleBadge();
+    const m = bootstrap.Modal.getInstance('#loginModal'); if (m) m.hide();
+    showView('view-dashboard');
+    syncPatientsFromCloud();
+    renderPatients();
+    updateDashboardCounts();
+  }
+  function nurseLogout(){
+    currentNurse = null;
+    updateRoleBadge();
+    showView('view-landing');
+    document.getElementById('landing-search').value = "";
+    document.getElementById('landing-result').innerHTML = "";
+  }
+
+  /* ============================================================================
+     เพิ่ม / แก้ไข / ลบ ผู้ป่วย (เฉพาะพยาบาล) — ซิงก์ขึ้น Google Sheets ด้วย
+     ============================================================================ */
+  function openAddPatient(){
+    editingId = null;
+    document.getElementById('patient-modal-title').innerHTML = '<i class="fa-solid fa-user-plus text-primary me-2"></i> เพิ่มผู้ป่วยใหม่';
+    ['pf-name','pf-age','pf-cid','pf-hn','pf-dx'].forEach(id => document.getElementById(id).value = "");
+    new bootstrap.Modal('#addPatientModal').show();
+  }
+  function openEditPatient(id){
+    const p = patients.find(x => x.id === id); if (!p) return;
+    editingId = id;
+    document.getElementById('patient-modal-title').innerHTML = '<i class="fa-solid fa-user-pen text-primary me-2"></i> แก้ไขข้อมูลผู้ป่วย';
+    document.getElementById('pf-name').value = p.name;
+    document.getElementById('pf-age').value  = p.age;
+    document.getElementById('pf-cid').value  = p.cid;
+    document.getElementById('pf-hn').value   = p.HN;
+    document.getElementById('pf-dx').value   = p.dx;
+    new bootstrap.Modal('#addPatientModal').show();
+  }
+  function submitPatient(){
+    const name = document.getElementById('pf-name').value.trim();
+    if (!name){ alert("กรุณากรอกชื่อ-นามสกุลผู้ป่วย"); return; }
+    const cid = document.getElementById('pf-cid').value.replace(/\D/g,'');
+    if (cid && cid.length !== 13){ if(!confirm("เลขบัตรประชาชนไม่ครบ 13 หลัก ต้องการบันทึกต่อหรือไม่?")) return; }
+    const p = normalizePatient({
+      id:   editingId || genPatientId(),
+      name: name,
+      age:  document.getElementById('pf-age').value.trim(),
+      HN:   document.getElementById('pf-hn').value.trim(),
+      cid:  cid,
+      dx:   document.getElementById('pf-dx').value.trim()
+    });
+    if (!p.HN) p.HN = p.id;
+    upsertPatientLocal(p);
+    cloudSavePatient(p);
+    const m = bootstrap.Modal.getInstance('#addPatientModal'); if (m) m.hide();
+    renderPatients();
+    updateDashboardCounts();
+  }
+  // เผื่อโค้ดเดิมเรียก addPatient()
+  function addPatient(){ submitPatient(); }
+  function deletePatient(id){
+    const p = patients.find(x => x.id === id); if (!p) return;
+    if (!confirm('ยืนยันลบผู้ป่วย "'+p.name+'" ออกจากระบบ?')) return;
+    patients = patients.filter(x => x.id !== id);
+    savePatientsLocal();
+    cloudDeletePatient(id);
+    renderPatients();
+    updateDashboardCounts();
+  }
+
+  /* ============================================================================
+     สลับหน้า
+     ============================================================================ */
+  function showView(id){
+    ['view-landing','view-dashboard','view-training'].forEach(v => {
+      const el = document.getElementById(v); if (el) el.classList.toggle('d-none-h', v !== id);
+    });
+    window.scrollTo(0,0);
+  }
+  function clearTrainingMedia(){
+    const vp = document.getElementById('video-player'); if (vp) vp.src = "";
+    const vv = document.getElementById('vowel-video');  if (vv) vv.src = "";
+  }
+  function goHome(){ stopAllAudio(); clearTrainingMedia(); showView(currentNurse ? 'view-dashboard' : 'view-landing'); }
+
+  function enterTrainingById(id, returnView){ const p = patients.find(x => x.id === id); if (p) enterTraining(p, returnView); }
+  function enterTraining(patient, returnView){
+    currentPatient = normalizePatient(patient);
+    trainingReturnView = returnView || (currentNurse ? 'view-dashboard' : 'view-landing');
+    sessionCount = 0;
+    document.getElementById('session-count').innerText = 0;
+    document.getElementById('patient-display').innerText = currentPatient.name + (currentPatient.HN ? " (" + currentPatient.HN + ")" : "");
+    const dxEl = document.getElementById('patient-dx');
+    if (dxEl){
+      if (currentPatient.dx){ dxEl.innerHTML = '<i class="fa-solid fa-stethoscope me-1"></i>'+escapeHtml(currentPatient.dx); dxEl.classList.remove('d-none-h'); }
+      else dxEl.classList.add('d-none-h');
+    }
+    showView('view-training');
+    renderTopicMenu();
+    switchTopic(1);
+  }
+  // เผื่อโค้ดเดิมเรียก startTraining / goDashboard
+  function startTraining(patientId){ enterTrainingById(patientId, 'view-dashboard'); }
+  function goDashboard(){ goBack(); }
+  function goBack(){
+    stopAllAudio(); clearTrainingMedia();
+    showView(trainingReturnView);
+    if (trainingReturnView === 'view-dashboard'){ renderPatients(); updateDashboardCounts(); }
+    else { const ls=document.getElementById('landing-search'); if(ls) ls.value=""; const lr=document.getElementById('landing-result'); if(lr) lr.innerHTML=""; }
+  }
+
+  /* ============================================================================
+     หัวข้อฝึก
+     ============================================================================ */
+  function renderTopicMenu(){
+    const menu = document.getElementById('topic-menu');
+    menu.innerHTML = "";
+    Object.keys(topicsData).forEach(num => {
+      const t = topicsData[num];
+      const div = document.createElement('div');
+      div.className = "topic-item" + (Number(num)===currentTopicNum ? " active" : "");
+      div.dataset.num = num;
+      const shortTitle = t.title.replace(/^\d+\.\s*/,'');
+      div.innerHTML = `<span class="num">${num}</span><span class="topic-copy"><span class="topic-label">${shortTitle}</span><span class="topic-kind">${t.hasAudio ? 'ฝึกเสียงพูด' : 'วิดีโอฝึกกล้ามเนื้อ'}</span></span>`;
+      div.onclick = () => switchTopic(Number(num));
+      menu.appendChild(div);
+    });
+  }
+
+  function switchTopic(num){
+    const data = topicsData[num];
+    if (!data) return;
+    currentTopicNum = num;
+    currentTopicName = data.title;
+    selectedWord = "";
+    currentWordList = [];
+
+    document.querySelectorAll('.topic-item').forEach(el => el.classList.toggle('active', Number(el.dataset.num)===num));
+    document.getElementById('topic-title').innerText = data.title;
+    document.getElementById('topic-desc').innerText  = data.desc;
+
+    // รีเซ็ตผลประเมิน
+    resetEval();
+    clearScoreSelection();
+    document.getElementById('evalNote').value = "";
+    document.getElementById('speech-output').innerText = "-";
+    document.getElementById('current-word').innerText = "-";
+    updateWordIllus("");
+    spokenLog = [];   // เริ่มบันทึกผลการพูดของหัวข้อนี้ใหม่
+
+    const videoSection = document.getElementById('video-section');
+    const audioSection = document.getElementById('audio-section');
+    const vowelMedia   = document.getElementById('vowel-media');
+
+    if (data.hasAudio){
+      videoSection.classList.add('d-none-h');
+      document.getElementById('video-player').src = "";
+      audioSection.classList.remove('d-none-h');
+
+      if (num === 4){
+        vowelMedia.classList.remove('d-none-h');
+        currentWordList = data.wordsDetail.map(x => x.w);
+        buildWordGrid(data.wordsDetail.map(x => x.w), (w) => {
+          const item = data.wordsDetail.find(x => x.w === w);
+          document.getElementById('vowel-video').src = item ? item.embedv : "";
+        });
+      } else {
+        vowelMedia.classList.add('d-none-h');
+        document.getElementById('vowel-video').src = "";
+        currentWordList = data.words.slice();
+        if (data.groups) buildGroupedWordGrid(data.groups);   // แสดงคำเป็นหมวดหมู่ (หัวข้อ 5)
+        else buildWordGrid(data.words, null);
+      }
+      // เลือกคำแรกอัตโนมัติ (พร้อมโหลดวิดีโอสระตัวแรกถ้าเป็นหัวข้อ 4)
+      if (currentWordList.length){
+        const first = currentWordList[0];
+        selectWord(first);
+        const grid = document.getElementById('words-grid');
+        if (grid._onSelectExtra) grid._onSelectExtra(first);
+      }
+    } else {
+      audioSection.classList.add('d-none-h');
+      vowelMedia.classList.add('d-none-h');
+      document.getElementById('vowel-video').src = "";
+      videoSection.classList.remove('d-none-h');
+      document.getElementById('video-player').src = data.video;
+    }
+  }
+
+  function buildWordGrid(words, onSelectExtra){
+    const grid = document.getElementById('words-grid');
+    grid.innerHTML = "";
+    words.forEach(w => {
+      const b = document.createElement('span');
+      b.className = "word-badge";
+      const emoji = WORD_IMAGES[w];
+      b.innerHTML = (emoji ? `<span class="wb-emoji">${emoji}</span>` : "") + `<span>${w}</span>`;
+      b.dataset.word = w;
+      b.onclick = () => { selectWord(w); if (onSelectExtra) onSelectExtra(w); };
+      grid.appendChild(b);
+    });
+    // เก็บ callback ไว้ใช้ตอนกดปุ่มก่อนหน้า/ถัดไป (สำหรับวิดีโอสระ)
+    grid._onSelectExtra = onSelectExtra;
+  }
+
+  // สร้างปุ่มเลือกคำแบบแบ่งเป็นหมวดหมู่ (เช่น หัวข้อ 5: ตัวเลข/วัน/เดือน/อวัยวะ)
+  function buildGroupedWordGrid(groups, onSelectExtra){
+    const grid = document.getElementById('words-grid');
+    grid.innerHTML = "";
+    groups.forEach(g => {
+      const section = document.createElement('div');
+      section.className = "word-group";
+      const title = document.createElement('div');
+      title.className = "word-group-title";
+      title.innerHTML = `<i class="fa-solid ${g.icon||'fa-tag'}"></i> ${g.name} <span class="text-muted fw-normal" style="font-size:.85rem;">(${g.words.length} คำ)</span>`;
+      section.appendChild(title);
+      const items = document.createElement('div');
+      items.className = "word-group-items";
+      g.words.forEach(w => {
+        const b = document.createElement('span');
+        b.className = "word-badge";
+        const emoji = WORD_IMAGES[w];
+        b.innerHTML = (emoji ? `<span class="wb-emoji">${emoji}</span>` : "") + `<span>${w}</span>`;
+        b.dataset.word = w;
+        b.onclick = () => { selectWord(w); if (onSelectExtra) onSelectExtra(w); };
+        items.appendChild(b);
+      });
+      section.appendChild(items);
+      grid.appendChild(section);
+    });
+    grid._onSelectExtra = onSelectExtra || null;
+  }
+
+  function selectWord(w){
+    selectedWord = w;
+    document.getElementById('current-word').innerText = w;
+    updateWordIllus(w);
+    document.querySelectorAll('.word-badge').forEach(b => b.classList.toggle('active', b.dataset.word === w));
+    resetEval();
+    document.getElementById('speech-output').innerText = "-";
+  }
+
+  // แสดง/ซ่อนภาพประกอบ (อีโมจิ) ของคำที่กำลังฝึก
+  function updateWordIllus(w){
+    const illus = document.getElementById('word-illus');
+    if (!illus) return;
+    const emoji = WORD_IMAGES[w];
+    if (emoji){ illus.innerText = emoji; illus.classList.remove('d-none-h'); }
+    else { illus.innerText = ""; illus.classList.add('d-none-h'); }
+  }
+
+  function stepWord(dir){
+    if (!currentWordList.length) return;
+    let idx = currentWordList.indexOf(selectedWord);
+    idx = (idx + dir + currentWordList.length) % currentWordList.length;
+    const w = currentWordList[idx];
+    selectWord(w);
+    const grid = document.getElementById('words-grid');
+    if (grid._onSelectExtra) grid._onSelectExtra(w);
+    // เลื่อนปุ่มที่เลือกให้เห็น
+    const el = document.querySelector(`.word-badge[data-word="${CSS.escape(w)}"]`);
+    if (el) el.scrollIntoView({ behavior:'smooth', block:'nearest', inline:'center' });
+  }
+
+  /* ============================================================================
+     เสียงต้นแบบ (Text-to-Speech)
+     ============================================================================ */
+  function warmUpVoices(){ try { window.speechSynthesis.getVoices(); } catch(e){} }
+
+  function pickThaiVoice(){
+    const voices = window.speechSynthesis.getVoices() || [];
+    return voices.find(v => v.lang && v.lang.toLowerCase().startsWith('th')) || null;
+  }
+
+  function speak(text, rate){
+    if (!text || !('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'th-TH';
+    u.rate = rate || ttsRate;
+    const v = pickThaiVoice(); if (v) u.voice = v;
+    window.speechSynthesis.speak(u);
+  }
+
+  function speakCurrentWord(){
+    if (!selectedWord){ alert("กรุณาเลือกคำที่จะฟังก่อนครับ"); return; }
+    speak(selectedWord, ttsRate);
+  }
+
+  function setRate(r, btn){
+    ttsRate = r;
+    document.querySelectorAll('#rate-slow,#rate-normal,#rate-fast').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  function stopAllAudio(){
+    try { window.speechSynthesis.cancel(); } catch(e){}
+    try { if (recognition) recognition.abort(); } catch(e){}
+    resetMicButton();
+  }
+
+  /* ============================================================================
+     ไมโครโฟน (Speech Recognition) — เปิดในหน้าเดียว
+     ============================================================================ */
+  let recognition = null;
+
+  function startListening(){
+    if (!selectedWord){ alert("กรุณาเลือกคำที่จะฝึกพูดก่อนครับ"); return; }
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR){ alert("บราวเซอร์นี้ไม่รองรับระบบเสียง แนะนำให้ใช้ Google Chrome ครับ"); return; }
+    window.speechSynthesis.cancel();
+
+    recognition = new SR();
+    recognition.lang = 'th-TH';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 8;
+
+    const micBtn = document.getElementById('mic-btn');
+    micBtn.classList.add('listening');
+    micBtn.innerHTML = '<i class="fa-solid fa-ear-listen me-2"></i> กำลังฟัง... พูดได้เลย';
+    document.getElementById('speech-output').innerText = "🎧 ...";
+
+    recognition.onresult = (event) => {
+      const alts = [];
+      for (let i = 0; i < event.results[0].length; i++) alts.push(event.results[0][i].transcript.trim());
+      const spoken = alts[0] || "";
+      document.getElementById('speech-output').innerText = spoken || "-";
+      evaluateSpokenText(spoken, alts);
+    };
+    recognition.onerror = (e) => {
+      resetMicButton();
+      let msg = "เกิดข้อผิดพลาด: " + e.error;
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed')
+        msg = "⚠️ ยังไม่ได้อนุญาตสิทธิ์ไมโครโฟน\nกรุณากดอนุญาต (Allow) ไมค์บนเว็บนี้ก่อนครับ";
+      else if (e.error === 'no-speech')
+        msg = "ไม่ได้ยินเสียงพูดครับ ลองกดปุ่มแล้วพูดใหม่อีกครั้งนะครับ";
+      else if (e.error === 'network')
+        msg = "⚠️ ระบบเสียงต้องเปิดผ่าน https หรือ localhost\nหากเปิดไฟล์ตรงๆ (file://) ไมค์อาจใช้ไม่ได้ครับ";
+      alert(msg);
+    };
+    recognition.onend = () => resetMicButton();
+
+    try { recognition.start(); }
+    catch(err){ resetMicButton(); }
+  }
+
+  function resetMicButton(){
+    const micBtn = document.getElementById('mic-btn');
+    if (!micBtn) return;
+    micBtn.classList.remove('listening');
+    micBtn.innerHTML = '<i class="fa-solid fa-microphone me-2"></i> พูดตาม';
+  }
+
+  /* ============================================================================
+     ประเมินผลอัตโนมัติ (เทียบคำที่พูดกับคำต้นแบบ + ให้อภัยเล็กน้อย)
+     ============================================================================ */
+  function normalize(s){
+    return (s || "")
+      .toString()
+      .toLowerCase()
+      .replace(/[​‌‍]/g, "")                       // ตัดอักขระซ่อน (zero-width)
+      .replace(/\s+/g, "")                                        // ตัดช่องว่าง
+      .replace(/[.,!?~"'`\-–—ๆฯ]/g, "")                 // ตัดเครื่องหมายวรรคตอน
+      .replace(/[๐-๙]/g, d => "๐๑๒๓๔๕๖๗๘๙".indexOf(d).toString()); // เลขไทย → เลขอารบิก (๒ → 2)
+  }
+
+  /* คำพ้อง/รูปแบบที่ระบบเสียงมักถอดออกมา ให้ถือว่า "ถูกต้อง"
+     (เช่น พูดว่า "สอง" แต่ระบบถอดเป็นเลข "2" หรือพูดชื่อเดือนแบบย่อ) */
+  const WORD_ALIASES = {
+    "หนึ่ง":["1","นึง","หฺนึ่ง"], "สอง":["2"], "สาม":["3"], "สี่":["4"], "ห้า":["5"],
+    "หก":["6"], "เจ็ด":["7","เจ็ต"], "แปด":["8","แปต"], "เก้า":["9","ก้าว"], "สิบ":["10","สิป"],
+    "วันจันทร์":["จันทร์","จันทร"], "วันอังคาร":["อังคาร","อังคาน"], "วันพุธ":["พุธ","พุด"],
+    "วันพฤหัสบดี":["พฤหัสบดี","พฤหัส","วันพฤหัส","พฤหัด"], "วันศุกร์":["ศุกร์","ศุก","สุก"],
+    "วันเสาร์":["เสาร์","เสา"], "วันอาทิตย์":["อาทิตย์","อาทิด"],
+    "มกราคม":["มกรา","ม.ค."], "กุมภาพันธ์":["กุมภา","ก.พ.","กุมภาพัน"], "มีนาคม":["มีนา","มี.ค."],
+    "เมษายน":["เมษา","เม.ย."], "พฤษภาคม":["พฤษภา","พ.ค."], "มิถุนายน":["มิถุนา","มิ.ย."],
+    "กรกฎาคม":["กรกฎา","ก.ค.","กรกฏาคม"], "สิงหาคม":["สิงหา","ส.ค."], "กันยายน":["กันยา","ก.ย."],
+    "ตุลาคม":["ตุลา","ต.ค."], "พฤศจิกายน":["พฤศจิกา","พ.ย.","พฤษจิกายน"], "ธันวาคม":["ธันวา","ธ.ค."]
+  };
+
+  // รวมคำต้นแบบ + คำพ้องทั้งหมด (ในรูป normalize แล้ว) เพื่อใช้เทียบ
+  function acceptableForms(target){
+    return [target, ...(WORD_ALIASES[target] || [])].map(normalize).filter(Boolean);
+  }
+
+  function similarity(a, b){
+    a = normalize(a); b = normalize(b);
+    if (!a || !b) return 0;
+    if (a === b) return 1;
+    // Levenshtein
+    const m = a.length, n = b.length;
+    const dp = Array.from({length:m+1}, (_,i) => [i, ...Array(n).fill(0)]);
+    for (let j=0;j<=n;j++) dp[0][j]=j;
+    for (let i=1;i<=m;i++) for (let j=1;j<=n;j++)
+      dp[i][j] = Math.min(dp[i-1][j]+1, dp[i][j-1]+1, dp[i-1][j-1] + (a[i-1]===b[j-1]?0:1));
+    return 1 - dp[m][n] / Math.max(m, n);
+  }
+
+  function evaluateSpokenText(spoken, alts){
+    const box = document.getElementById('eval-box');
+    box.classList.remove('d-none-h');
+    const target = selectedWord;
+
+    // เทียบทุกตัวเลือกที่ระบบได้ยิน (maxAlternatives) กับทุกรูปแบบที่ยอมรับ (คำต้นแบบ + คำพ้อง)
+    const forms = acceptableForms(target);
+    const candidates = (alts && alts.length ? alts : [spoken]);
+    let best = spoken, bestScore = 0, exactHit = false;
+
+    candidates.forEach(c => {
+      const nc = normalize(c);
+      if (!nc) return;
+      forms.forEach(fn => {
+        let s = similarity(nc, fn);
+        if (nc === fn){ s = 1; exactHit = true; }
+        else {
+          // ให้เครดิตกรณีพูดสั้น/ยาวกว่าเล็กน้อยแต่เป็นส่วนหลักของคำ (เช่น "มกรา" ↔ "มกราคม")
+          const shorter = nc.length <= fn.length ? nc : fn;
+          const longer  = nc.length <= fn.length ? fn : nc;
+          if (shorter.length >= 2 && longer.includes(shorter) && (shorter.length / longer.length) >= 0.5)
+            s = Math.max(s, 0.9);
+        }
+        if (s > bestScore){ bestScore = s; best = c; }
+      });
+    });
+
+    const accuracyPercent = Math.min(100, Math.round(bestScore * 100));   // คะแนนความแม่นยำ 0–100
+    const isExact = exactHit || bestScore >= 0.9;
+    const isClose = (!isExact && bestScore >= 0.5);
+    const level = isExact ? 'good' : isClose ? 'mid' : 'bad';
+
+    // กล่องผล + เสียงตอบรับ (ผลของคำที่พูดล่าสุด)
+    if (isExact){
+      box.className = "result-box result-good";
+      box.innerHTML = `🎯 เยี่ยมมาก! ออกเสียง "${target}" ได้ถูกต้องชัดเจน &nbsp;<span class="acc-chip">คะแนน ${accuracyPercent}/100</span>`;
+      speak("เยี่ยมมากครับ", 1);
+    } else if (isClose){
+      box.className = "result-box result-mid";
+      box.innerHTML = `⚠️ ใกล้เคียงมาก &nbsp;<span class="acc-chip">คะแนน ${accuracyPercent}/100</span><br>ลองอีกครั้งนะครับ`;
+      speak("เกือบถูกแล้วครับ ลองอีกครั้ง", 1);
+    } else {
+      box.className = "result-box result-bad";
+      box.innerHTML = `❌ ยังไม่ตรง ระบบได้ยินเป็น "${spoken}" &nbsp;<span class="acc-chip">คะแนน ${accuracyPercent}/100</span>`;
+      speak("ลองใหม่อีกครั้งนะครับ", 1);
+    }
+
+    // ตรวจความแม่นยำและให้คะแนนทุกคำที่พูด แล้วสรุปลงช่อง "บันทึกเพิ่มเติมจากนักบำบัด" ให้ครบ
+    logSpokenResult(target, spoken, accuracyPercent, level);
+  }
+
+  /* บันทึกผลการพูดสะสม (1 บรรทัดต่อ 1 คำ, พูดซ้ำ = อัปเดตครั้งล่าสุด) แล้วให้คะแนนเฉลี่ยตามการพูดทั้งหมด */
+  function logSpokenResult(word, heard, percent, level){
+    const idx = spokenLog.findIndex(x => x.word === word);
+    const entry = { word, heard, percent, level };
+    if (idx >= 0) spokenLog[idx] = entry; else spokenLog.push(entry);
+    renderSpokenNote();
+  }
+
+  function renderSpokenNote(){
+    const noteEl = document.getElementById('evalNote');
+    if (!spokenLog.length){ noteEl.value = ""; return; }
+    const icon  = { good:"✅", mid:"⚠️", bad:"❌" };
+    const label = { good:"ถูกต้องชัดเจน", mid:"ใกล้เคียง", bad:"ยังไม่ชัด" };
+    const avgAcc = Math.round(spokenLog.reduce((s,x) => s + x.percent, 0) / spokenLog.length);   // ความแม่นยำเฉลี่ย %
+    const lines = spokenLog.map(x => {
+      const heardTxt = (x.level === 'good' && x.percent >= 100) ? "" : ` · ได้ยิน: "${x.heard || '-'}"`;
+      return `${icon[x.level]} "${x.word}" → แม่นยำ ${x.percent}% (${label[x.level]})${heardTxt}`;
+    });
+    // แปลงความแม่นยำเฉลี่ยเป็นผลประเมิน 0/1/2 : ≥67%→2, ≥34%→1, อื่น ๆ →0
+    const pts = avgAcc >= 67 ? 2 : avgAcc >= 34 ? 1 : 0;
+    noteEl.value = `[ระบบอัตโนมัติ] ฝึกพูด ${spokenLog.length} คำ · ความแม่นยำเฉลี่ย ${avgAcc}% → ผลประเมิน ${pts}/2\n` + lines.join("\n");
+    // ให้คะแนนรวมตามการพูดให้ครบทุกคำ (ตั้ง pendingScoreValue หลัง autoScore เพราะ autoScore จะรีเซ็ตก่อน)
+    autoScore(pts >= 2 ? 'good' : pts >= 1 ? 'mid' : 'bad');
+    pendingScoreValue = pts;
+  }
+
+  function resetEval(){
+    const box = document.getElementById('eval-box');
+    box.classList.add('d-none-h');
+    box.className = "result-box d-none-h";
+    box.innerHTML = "";
+  }
+
+  /* ============================================================================
+     การให้คะแนน
+     ============================================================================ */
+  const SCORE_MAP = { bad:"ทำไม่ได้ / ปรับปรุง", mid:"ทำได้บางส่วน", good:"ทำได้ดีเยี่ยม" };
+
+  function selectScore(el, level){
+    clearScoreSelection();
+    el.classList.add('sel-' + level);
+    selectedScore = el.dataset.score;
+    pendingScoreValue = (selectedScore in SCORE_VALUE) ? SCORE_VALUE[selectedScore] : null;  // นักบำบัดเลือกเอง → ให้คะแนนตามระดับ
+  }
+
+  function autoScore(level){
+    clearScoreSelection();
+    const map = { bad:0, mid:1, good:2 };
+    const card = document.querySelectorAll('.score-card')[map[level]];
+    if (card){ card.classList.add('sel-' + level); selectedScore = card.dataset.score; }
+  }
+
+  function clearScoreSelection(){
+    document.querySelectorAll('.score-card').forEach(c => c.classList.remove('sel-bad','sel-mid','sel-good'));
+    selectedScore = "";
+    pendingScoreValue = null;
+  }
+
+  /* ============================================================================
+     บันทึกผล → localStorage (เสมอ) + Google Sheets (ถ้าตั้งค่า URL ไว้)
+     ============================================================================ */
+  function getHistory(){ return JSON.parse(localStorage.getItem(LS_HISTORY) || "[]"); }
+
+  function saveAssessment(){
+    if (!currentPatient){ alert("ไม่พบรหัสผู้ป่วย ไม่สามารถบันทึกได้"); return; }
+    if (!selectedScore){ alert("กรุณาเลือกผลการประเมินก่อนบันทึกครับ"); return; }
+
+    const topic = currentTopicName + (selectedWord ? ` (คำที่ฝึก: ${selectedWord})` : '');
+    const note  = document.getElementById('evalNote').value;
+    const now   = new Date();
+    const record = {
+      ts: now.getTime(),
+      when: now.toLocaleString('th-TH'),
+      patientId: currentPatient.id,
+      patientName: currentPatient.name,
+      hn: currentPatient.HN,
+      cid: currentPatient.cid || "",
+      dx: currentPatient.dx || "",
+      topic,
+      score: selectedScore,
+      scoreValue: (pendingScoreValue != null ? pendingScoreValue : (selectedScore in SCORE_VALUE ? SCORE_VALUE[selectedScore] : "")),
+      by: currentNurse || "ผู้ป่วยฝึกเอง",
+      note
+    };
+
+    // 1) บันทึกลงเครื่องเสมอ (กันข้อมูลหาย)
+    const hist = getHistory();
+    hist.push(record);
+    localStorage.setItem(LS_HISTORY, JSON.stringify(hist));
+
+    // 2) ส่งขึ้น Google Sheets (ถ้ามี URL)
+    const btn = document.getElementById('btn-save');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> กำลังบันทึก...';
+
+    const finish = (cloudOk, extraMsg) => {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-floppy-disk me-2"></i> บันทึกผลลงระบบ';
+      sessionCount++;
+      document.getElementById('session-count').innerText = sessionCount;
+      clearScoreSelection();
+      spokenLog = [];   // เริ่มสะสมผลการพูดรอบใหม่หลังบันทึก
+      document.getElementById('evalNote').value = "";
+      resetEval();
+      document.getElementById('speech-output').innerText = "-";
+      const cloudTxt = GOOGLE_SCRIPT_URL ? (cloudOk ? " และส่งขึ้น Google Sheets แล้ว" : " (แต่ส่งขึ้น Google Sheets ไม่สำเร็จ: " + extraMsg + ")") : "";
+      alert("✨ บันทึกการประเมินเรียบร้อย" + cloudTxt);
+    };
+
+    if (GOOGLE_SCRIPT_URL){
+      jsonp({
+        action: "save",
+        patientId: record.patientId,
+        patientName: record.patientName,
+        hn: record.hn,
+        cid: record.cid,
+        dx: record.dx,
+        topic: record.topic,
+        score: record.score,
+        scoreValue: record.scoreValue,
+        by: record.by,
+        note: record.note
+      }).then(res => finish(res && res.status === "success", res ? res.message : ""))
+        .catch(err => finish(false, err.message));
+    } else {
+      finish(true, "");
+    }
+  }
+
+  /* -------------------- ตัวช่วยเรียก Google Apps Script แบบ JSONP -------------------- */
+  function jsonp(params){
+    return new Promise((resolve, reject) => {
+      if (!GOOGLE_SCRIPT_URL){ reject(new Error("ไม่ได้ตั้งค่า URL")); return; }
+      const cbName = "jsonp_cb_" + Math.floor(performance.now()) + "_" + Math.floor(Math.random()*1e6);
+      const script = document.createElement('script');
+      const timer = setTimeout(() => { cleanup(); reject(new Error("หมดเวลาเชื่อมต่อ")); }, 15000);
+      function cleanup(){ clearTimeout(timer); delete window[cbName]; if (script.parentNode) script.parentNode.removeChild(script); }
+      window[cbName] = (data) => { cleanup(); resolve(data); };
+      const qs = Object.keys(params).map(k => encodeURIComponent(k) + "=" + encodeURIComponent(params[k])).join("&");
+      script.src = GOOGLE_SCRIPT_URL + (GOOGLE_SCRIPT_URL.includes("?") ? "&" : "?") + qs + "&callback=" + cbName;
+      script.onerror = () => { cleanup(); reject(new Error("เชื่อมต่อไม่ได้")); };
+      document.head.appendChild(script);
+    });
+  }
+
+  /* ============================================================================
+     ประวัติการฝึก + ส่งออก CSV
+     ============================================================================ */
+  function openHistory(){ renderHistory(); new bootstrap.Modal('#historyModal').show(); }
+
+  function renderHistory(){
+    const body = document.getElementById('history-body');
+    const hist = getHistory().slice().reverse();
+    if (hist.length === 0){ body.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">ยังไม่มีประวัติการฝึก</td></tr>'; return; }
+    body.innerHTML = hist.map(h => `
+      <tr>
+        <td>${h.when}</td>
+        <td>${h.patientName}</td>
+        <td>${h.hn||"-"}</td>
+        <td>${h.topic}</td>
+        <td>${h.score}</td>
+        <td>${h.note||"-"}</td>
+      </tr>`).join("");
+  }
+
+  function exportCSV(){
+    const hist = getHistory();
+    if (hist.length === 0){ alert("ยังไม่มีข้อมูลให้ดาวน์โหลด"); return; }
+    const header = ["วัน-เวลา","รหัสผู้ป่วย","ชื่อผู้ป่วย","HN","หัวข้อการฝึก","ผลการประเมิน","หมายเหตุ"];
+    const esc = v => `"${String(v==null?"":v).replace(/"/g,'""')}"`;
+    const rows = hist.map(h => [h.when, h.patientId, h.patientName, h.hn, h.topic, h.score, h.note].map(esc).join(","));
+    const csv = "﻿" + header.map(esc).join(",") + "\n" + rows.join("\n");
+    const blob = new Blob([csv], { type:"text/csv;charset=utf-8;" });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = "ผลการประเมินการฝึก.csv";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  function clearHistory(){
+    if (!confirm("ยืนยันล้างประวัติการฝึกทั้งหมด?\n(ข้อมูลที่ส่งขึ้น Google Sheets แล้วจะยังอยู่)")) return;
+    localStorage.removeItem(LS_HISTORY);
+    renderHistory();
+    updateDashboardCounts();
+    renderPatients();
+  }
+
+  /* ============================================================================
+     ความก้าวหน้าของผู้ป่วยรายเดือน (Progress)
+       - แปลงผลประเมินเป็นคะแนน: ปรับปรุง=0, ทำได้บางส่วน=50, ทำได้ดีเยี่ยม=100
+       - จัดกลุ่มประวัติตามเดือน แล้วแสดงเป็นกราฟแท่ง + สรุปรายหัวข้อ
+     ============================================================================ */
+  // ผลการประเมินเป็นคะแนน 0/1/2 : ทำไม่ได้=0, บางส่วน=1, ทำได้ครบ=2
+  const SCORE_VALUE = { "ทำไม่ได้ / ปรับปรุง":0, "ทำได้บางส่วน":1, "ทำได้ดีเยี่ยม":2 };
+  const SCORE_MAX = 2;
+
+  function scoreToValue(s){
+    if (s in SCORE_VALUE) return SCORE_VALUE[s];
+    if (s === 'good') return 2;      // เผื่อข้อมูลเก่าที่เก็บเป็นรหัส
+    if (s === 'mid')  return 1;
+    if (s === 'bad')  return 0;
+    return 0;
+  }
+
+  // avg เป็นคะแนน 0–2
+  function levelInfo(avg){
+    if (avg >= 1.5) return { label:"ทำได้ครบ",     color:"good", emoji:"✅", txt:"text-success" };
+    if (avg >= 0.5) return { label:"ทำได้บางส่วน", color:"mid",  emoji:"⚠️", txt:"text-warning" };
+    return            { label:"ต้องปรับปรุง",   color:"bad",  emoji:"❌", txt:"text-danger" };
+  }
+
+  // คะแนน 0/1/2 ของ 1 รายการ (แปลงข้อมูลเก่าที่เคยเก็บเป็น 0–100 ให้เป็น 0/1/2 อัตโนมัติ)
+  function histPoints(h){
+    if (h && typeof h.scoreValue === 'number'){ const v = h.scoreValue; return v > SCORE_MAX ? (v >= 67 ? 2 : v >= 34 ? 1 : 0) : v; }
+    return scoreToValue(h ? h.score : "");
+  }
+
+  function openProgress(patientId){
+    const sel = document.getElementById('prog-patient');
+    sel.innerHTML = patients.map(p => `<option value="${p.id}">${p.name} — HN ${p.HN}</option>`).join("");
+    if (patientId) sel.value = patientId;
+    renderProgress();
+    new bootstrap.Modal('#progressModal').show();
+  }
+
+  function renderProgress(){
+    const pid = document.getElementById('prog-patient').value;
+    const box = document.getElementById('progress-content');
+    const hist = getHistory().filter(h => h.patientId === pid).sort((a,b) => a.ts - b.ts);
+
+    if (!hist.length){
+      box.innerHTML = '<div class="text-center text-muted py-5 fs-5"><i class="fa-regular fa-folder-open fs-1 d-block mb-3 opacity-50"></i>ยังไม่มีข้อมูลการฝึกของผู้ป่วยรายนี้<br><small>เริ่มฝึกและบันทึกผลเพื่อดูความก้าวหน้ารายเดือน</small></div>';
+      return;
+    }
+
+    const MAX = SCORE_MAX;                     // เต็ม 2
+    const pctOf = v => Math.round(v / MAX * 100);   // แปลงคะแนน 0–2 เป็น % ความสูงแท่ง
+
+    // ---- จัดกลุ่มตามเดือน ----
+    const months = {};
+    hist.forEach(h => {
+      const d = new Date(h.ts);
+      const key = d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0");
+      if (!months[key]) months[key] = { key, year:d.getFullYear(), month:d.getMonth(), n:0, sum:0, good:0, mid:0, bad:0 };
+      const v = histPoints(h), M = months[key];
+      M.n++; M.sum += v;
+      if (v >= 2) M.good++; else if (v >= 1) M.mid++; else M.bad++;
+    });
+    const list = Object.values(months).sort((a,b) => a.key < b.key ? -1 : 1);
+    list.forEach(m => m.avg = m.sum / m.n);
+
+    const first = list[0], last = list[list.length-1];
+    const improve = last.avg - first.avg;
+    const lvl = levelInfo(last.avg);
+    const impTxt   = (improve > 0 ? '+' : '') + improve.toFixed(1);
+    const impClass = improve > 0 ? 'text-success' : improve < 0 ? 'text-danger' : 'text-muted';
+    const impIcon  = improve > 0 ? 'fa-arrow-trend-up' : improve < 0 ? 'fa-arrow-trend-down' : 'fa-minus';
+
+    // ---- กราฟแท่งรายเดือน ----
+    const monthName = (y,mo) => new Date(y, mo, 1).toLocaleDateString('th-TH', { month:'short', year:'numeric' });
+    let chart = '<div class="prog-chart">';
+    list.forEach(m => {
+      const c = levelInfo(m.avg).color;
+      chart += `
+        <div class="prog-col" title="✅ ${m.good} · ⚠️ ${m.mid} · ❌ ${m.bad}">
+          <div class="prog-val">${m.avg.toFixed(1)}</div>
+          <div class="prog-bar"><div class="prog-bar-fill fill-${c}" style="height:${Math.max(pctOf(m.avg),3)}%"></div></div>
+          <div class="prog-month">${monthName(m.year, m.month)}</div>
+          <div class="prog-sessions">${m.n} ครั้ง</div>
+        </div>`;
+    });
+    chart += '</div>';
+
+    // ---- กราฟแท่งรายครั้ง (ผลประเมินย้อนหลังล่าสุด สูงสุด 24 ครั้ง) ----
+    const recent = hist.slice(-24);
+    let sChart = '<div class="prog-chart">';
+    recent.forEach(h => {
+      const v = histPoints(h);
+      const c = levelInfo(v).color;
+      const dl = new Date(h.ts).toLocaleDateString('th-TH', { day:'numeric', month:'short' });
+      sChart += `
+        <div class="prog-col" title="${escapeHtml((h.topic||'').split(' (')[0])} — ${v}/2">
+          <div class="prog-val">${v}</div>
+          <div class="prog-bar"><div class="prog-bar-fill fill-${c}" style="height:${Math.max(pctOf(v),4)}%"></div></div>
+          <div class="prog-month">${dl}</div>
+        </div>`;
+    });
+    sChart += '</div>';
+
+    // ---- สรุปตามหัวข้อการฝึก ----
+    const topics = {};
+    hist.forEach(h => {
+      const base = (h.topic || "-").split(' (')[0];
+      if (!topics[base]) topics[base] = { sum:0, n:0 };
+      topics[base].sum += histPoints(h);
+      topics[base].n++;
+    });
+    const topicRows = Object.keys(topics).map(t => {
+      const avg = topics[t].sum / topics[t].n;
+      const c = levelInfo(avg).color;
+      return `<tr>
+        <td class="fw-semibold">${escapeHtml(t)}</td>
+        <td class="text-center">${topics[t].n}</td>
+        <td style="min-width:180px;">
+          <div class="d-flex align-items-center gap-2">
+            <div class="mini-bar flex-grow-1"><div class="mini-fill fill-${c}" style="width:${pctOf(avg)}%"></div></div>
+            <span class="fw-bold" style="width:56px;">${avg.toFixed(1)}/2</span>
+          </div>
+        </td>
+      </tr>`;
+    }).join("");
+
+    // ---- ตารางผลประเมินย้อนหลังรายครั้ง (ใหม่ล่าสุดก่อน) ----
+    const histRows = hist.slice().reverse().map(h => {
+      const v = histPoints(h);
+      const li = levelInfo(v);
+      const when = new Date(h.ts).toLocaleString('th-TH', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+      return `<tr>
+        <td style="white-space:nowrap;">${when}</td>
+        <td>${escapeHtml(h.topic||'-')}</td>
+        <td class="text-center"><span class="hist-badge hist-${li.color}">${li.emoji} ${v}/2</span></td>
+        <td>${escapeHtml(h.by||'-')}</td>
+      </tr>`;
+    }).join("");
+
+    box.innerHTML = `
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3"><div class="prog-stat"><div class="ps-label">ฝึกทั้งหมด</div><div class="ps-num">${hist.length}<small> ครั้ง</small></div></div></div>
+        <div class="col-6 col-lg-3"><div class="prog-stat"><div class="ps-label">ระยะเวลาที่ฝึก</div><div class="ps-num">${list.length}<small> เดือน</small></div></div></div>
+        <div class="col-6 col-lg-3"><div class="prog-stat"><div class="ps-label">คะแนนเดือนล่าสุด</div><div class="ps-num ${lvl.txt}">${last.avg.toFixed(1)}<small> /2</small></div><div class="ps-sub ${lvl.txt}">${lvl.emoji} ${lvl.label}</div></div></div>
+        <div class="col-6 col-lg-3"><div class="prog-stat"><div class="ps-label">พัฒนาการเทียบเดือนแรก</div><div class="ps-num ${impClass}"><i class="fa-solid ${impIcon} me-1"></i>${impTxt}</div></div></div>
+      </div>
+
+      <h5 class="mb-3"><i class="fa-solid fa-chart-column text-success me-2"></i> คะแนนเฉลี่ยรายเดือน (เต็ม 2)</h5>
+      ${chart}
+
+      <h5 class="mt-4 mb-3"><i class="fa-solid fa-wave-square text-primary me-2"></i> ผลประเมินย้อนหลังรายครั้ง (ล่าสุด ${recent.length} ครั้ง)</h5>
+      ${sChart}
+
+      <div class="prog-legend mt-3 mb-2">
+        <span><span class="ldot fill-bad"></span> ทำไม่ได้ = 0</span>
+        <span><span class="ldot fill-mid"></span> ทำได้บางส่วน = 1</span>
+        <span><span class="ldot fill-good"></span> ทำได้ครบ = 2</span>
+      </div>
+
+      <h5 class="mt-4 mb-3"><i class="fa-solid fa-list-check text-primary me-2"></i> สรุปตามหัวข้อการฝึก</h5>
+      <div class="table-responsive">
+        <table class="table align-middle">
+          <thead><tr><th>หัวข้อ</th><th class="text-center">จำนวนครั้ง</th><th>คะแนนเฉลี่ย</th></tr></thead>
+          <tbody>${topicRows}</tbody>
+        </table>
+      </div>
+
+      <h5 class="mt-4 mb-3"><i class="fa-solid fa-clock-rotate-left text-secondary me-2"></i> รายการผลประเมินย้อนหลัง</h5>
+      <div class="table-responsive" style="max-height:320px; overflow:auto;">
+        <table class="table table-striped align-middle">
+          <thead><tr><th>วัน-เวลา</th><th>หัวข้อ</th><th class="text-center">คะแนน</th><th>ผู้บันทึก</th></tr></thead>
+          <tbody>${histRows}</tbody>
+        </table>
+      </div>`;
+  }
+  </script>
+
+  <!-- ==================== ส่วนเสริม: คะแนน + สรุปข้อมูล Dashboard (แยกอิสระ กันชนกับสคริปต์หลัก) ==================== -->
+  <script>
+  (function(){
+    const LS_HIST = "stroke_app_history";
+    const SV = { "ทำไม่ได้ / ปรับปรุง":0, "ทำได้บางส่วน":1, "ทำได้ดีเยี่ยม":2 };   // คะแนน 0/1/2
+
+    function readHist(){ try { return JSON.parse(localStorage.getItem(LS_HIST) || "[]"); } catch(e){ return []; } }
+    function val(h){   // คืนคะแนน 0/1/2 (แปลงข้อมูลเก่าที่เป็น 0–100 ให้เป็น 0/1/2)
+      if (h && typeof h.scoreValue === 'number'){ const v = h.scoreValue; return v > 2 ? (v >= 67 ? 2 : v >= 34 ? 1 : 0) : v; }
+      if (h && (h.score in SV)) return SV[h.score];
+      if (h && h.score === 'good') return 2;
+      if (h && h.score === 'mid')  return 1;
+      return 0;
+    }
+    function txtClass(a){ return a >= 1.5 ? 'text-success' : a >= 0.5 ? 'text-warning' : 'text-danger'; }
+    const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.innerText = v; };
+
+    // เติมข้อมูลการ์ดสรุป + แถบสัดส่วนผลการประเมิน
+    function fillExtras(){
+      const hist = readHist();
+      const now = new Date();
+      const mk = now.getFullYear() + '-' + now.getMonth();
+      const month = hist.filter(h => { const d = new Date(h.ts); return (d.getFullYear() + '-' + d.getMonth()) === mk; }).length;
+
+      setTxt('count-sessions', hist.length);
+      setTxt('count-month', month);
+
+      let good = 0, mid = 0, bad = 0, sum = 0;
+      hist.forEach(h => { const v = val(h); sum += v; if (v >= 2) good++; else if (v >= 1) mid++; else bad++; });
+
+      const avgEl = document.getElementById('avg-score');
+      if (avgEl){
+        if (hist.length){ const a = sum / hist.length; avgEl.innerText = a.toFixed(1) + ' / 2'; avgEl.className = 'stat-num ' + txtClass(a); }
+        else { avgEl.innerText = '-'; avgEl.className = 'stat-num text-muted'; }
+      }
+
+      const total = hist.length;
+      setTxt('dist-total', total + ' รายการ');
+      renderOverview(good, mid, bad, total, total ? sum / total : 0);
+      renderFollowup();
+    }
+
+    // ภาพรวมผลการประเมิน: โดนัท (conic) + คะแนนเฉลี่ยตรงกลาง + การ์ดหมวด + แถบสัดส่วน
+    function renderOverview(good, mid, bad, total, avg){
+      const pct = n => total ? Math.round(n / total * 100) : 0;
+      setTxt('ov-avg', total ? avg.toFixed(1) : '-');
+
+      const lvlEl = document.getElementById('ov-level');
+      if (lvlEl){
+        let name, bg, fg;
+        if (!total)          { name = 'ยังไม่มีข้อมูล'; bg = '#e6f1ff'; fg = '#6b7280'; }
+        else if (avg >= 1.5) { name = 'ทำได้ครบ';      bg = '#e8fbf4'; fg = '#0f766e'; }
+        else if (avg >= 0.5) { name = 'ทำได้บางส่วน';  bg = '#fff6e6'; fg = '#b45309'; }
+        else                 { name = 'ต้องปรับปรุง';  bg = '#fff0f3'; fg = '#be123c'; }
+        lvlEl.textContent = name; lvlEl.style.background = bg; lvlEl.style.color = fg;
+      }
+
+      const pie = document.getElementById('ov-pie');
+      if (pie){
+        if (!total){ pie.style.background = '#e6f1ff'; }
+        else {
+          const g2 = pct(good), m2 = g2 + pct(mid);
+          pie.style.background =
+            `conic-gradient(#0d9488 0 ${g2}%, #e08600 ${g2}% ${m2}%, #e11d48 ${m2}% 100%)`;
+        }
+      }
+
+      setTxt('ov-good', good); setTxt('ov-mid', mid); setTxt('ov-bad', bad);
+      setTxt('ov-good-pct', pct(good) + '%'); setTxt('ov-mid-pct', pct(mid) + '%'); setTxt('ov-bad-pct', pct(bad) + '%');
+      const setW = (id, n) => { const e = document.getElementById(id); if (e) e.style.width = (total ? n / total * 100 : 0) + '%'; };
+      setW('ov-good-bar', good); setW('ov-mid-bar', mid); setW('ov-bad-bar', bad);
+
+      const strip = document.getElementById('ov-strip');
+      if (strip){
+        if (!total){ strip.innerHTML = '<div class="dist-empty">ยังไม่มีข้อมูลการประเมิน</div>'; }
+        else {
+          const seg = (n, c) => n > 0 ? `<div class="dist-seg fill-${c}" style="width:${n / total * 100}%">${pct(n) >= 10 ? pct(n) + '%' : ''}</div>` : '';
+          strip.innerHTML = seg(good, 'good') + seg(mid, 'mid') + seg(bad, 'bad');
+        }
+      }
+    }
+
+    const escHtml = s => String(s==null?"":s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+    // ตารางประวัติ: คอลัมน์ วัน-เวลา · ผู้ป่วย · HN · หัวข้อ · ผล · คะแนน · ผู้บันทึก · หมายเหตุ
+    window.renderHistory = function(){
+      const body = document.getElementById('history-body');
+      if (!body) return;
+      const hist = readHist().slice().reverse();
+      if (!hist.length){ body.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">ยังไม่มีประวัติการฝึก</td></tr>'; return; }
+      body.innerHTML = hist.map(h => `<tr><td>${escHtml(h.when)}</td><td>${escHtml(h.patientName)}</td><td>${escHtml(h.hn||'-')}</td><td>${escHtml(h.topic)}</td><td>${escHtml(h.score)}</td><td class="fw-bold text-center">${val(h)}/2</td><td>${escHtml(h.by||'-')}</td><td>${escHtml(h.note||'-')}</td></tr>`).join("");
+    };
+
+    // ส่งออก CSV: เพิ่ม CID, การวินิจฉัย, คะแนน, ผู้บันทึก
+    window.exportCSV = function(){
+      const hist = readHist();
+      if (!hist.length){ alert("ยังไม่มีข้อมูลให้ดาวน์โหลด"); return; }
+      const header = ["วัน-เวลา","รหัสผู้ป่วย","ชื่อผู้ป่วย","HN","CID","การวินิจฉัย (Dx)","หัวข้อการฝึก","ผลการประเมิน","คะแนน (0-2)","ผู้บันทึก","หมายเหตุ"];
+      const esc = v => `"${String(v==null?"":v).replace(/"/g,'""')}"`;
+      const rows = hist.map(h => [h.when, h.patientId, h.patientName, h.hn, h.cid, h.dx, h.topic, h.score, val(h), h.by, h.note].map(esc).join(","));
+      const csv = "﻿" + header.map(esc).join(",") + "\n" + rows.join("\n");
+      const blob = new Blob([csv], { type:"text/csv;charset=utf-8;" });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "ผลการประเมินการฝึก.csv"; a.click(); URL.revokeObjectURL(a.href);
+    };
+
+    function boot(){
+      fillExtras();
+      // ต่อยอด updateDashboardCounts เดิม ให้รีเฟรชการ์ดเสริมทุกครั้ง
+      if (typeof window.updateDashboardCounts === 'function'){
+        const orig = window.updateDashboardCounts;
+        window.updateDashboardCounts = function(){ try { orig.apply(this, arguments); } catch(e){} fillExtras(); };
+      }
+      // รีเฟรชหลังกดบันทึกผล
+      document.addEventListener('click', function(e){
+        const t = e.target;
+        if (t && t.closest && t.closest('#btn-save')) setTimeout(fillExtras, 500);
+      });
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+    else boot();
+  })();
+  </script>
+</body>
+</html>
