@@ -1821,6 +1821,24 @@
     .pt-table.pt-compact .pt-cell-name{ gap:9px; }
     .pt-table.pt-compact .pt-btn{ padding:5px 9px!important; font-size:.85rem!important; }
     @media (max-width:640px){ .roster-toolbar,.roster-pager{ justify-content:flex-start; } .roster-select{ max-width:100%; } }
+
+    /* ---- กราฟแนวโน้ม (Trend) รายสัปดาห์/รายเดือน ---- */
+    .trend-toggle{ display:inline-flex; gap:4px; padding:4px; border-radius:999px; background:#eef0fb; }
+    .trend-tab{ border:0; background:transparent; padding:7px 16px; border-radius:999px;
+      font-weight:800; font-size:.92rem; color:#4a4f70; cursor:pointer; transition:all .14s ease; }
+    .trend-tab:hover{ color:var(--primary); }
+    .trend-tab.active{ background:#fff; color:#4f46e5; box-shadow:0 4px 12px rgba(40,33,97,.14); }
+    .trend-sub{ color:var(--muted); font-weight:700; margin-bottom:6px; }
+    .trend-body{ width:100%; overflow-x:auto; }
+    .trend-body svg{ width:100%; height:auto; display:block; min-width:540px; }
+    .trend-empty{ text-align:center; color:var(--muted); font-weight:700; padding:38px 0; }
+    .trend-grid{ stroke:#e7e9f6; stroke-width:1; }
+    .trend-axis{ fill:var(--muted); font-size:11px; font-weight:700; }
+    .trend-vol-lbl{ opacity:.65; }
+    .trend-vol{ fill:#e7e3ff; }
+    .trend-line{ filter:drop-shadow(0 6px 10px rgba(79,70,229,.28)); }
+    .trend-dot{ fill:#fff; stroke:#7c3aed; stroke-width:3; }
+    .trend-val{ fill:#2b2166; font-size:12px; font-weight:800; text-anchor:middle; }
   </style>
 </head>
 <body>
@@ -3535,7 +3553,117 @@
       const total = hist.length;
       setTxt('dist-total', total + ' รายการ');
       renderOverview(good, mid, bad, total, total ? sum / total : 0);
+      renderTrend();
       renderFollowup();
+    }
+
+    /* ---- กราฟแนวโน้มคะแนนเฉลี่ย รายสัปดาห์/รายเดือน (เส้น+พื้นที่ไล่สี) ---- */
+    let trendMode = 'month';
+    window.setTrendMode = function(m){ trendMode = m; renderTrend(); };
+
+    function trendPeriods(hist, mode){
+      const map = {};
+      hist.forEach(h => {
+        const d = new Date(h.ts);
+        let ts, key, label;
+        if (mode === 'week'){
+          const w = new Date(h.ts); w.setHours(0,0,0,0);
+          w.setDate(w.getDate() - ((w.getDay()+6)%7));   // จันทร์ต้นสัปดาห์
+          ts = w.getTime(); key = 'w'+ts;
+          label = w.toLocaleDateString('th-TH', { day:'numeric', month:'short' });
+        } else {
+          const m0 = new Date(d.getFullYear(), d.getMonth(), 1);
+          ts = m0.getTime(); key = 'm'+ts;
+          label = m0.toLocaleDateString('th-TH', { month:'short', year:'2-digit' });
+        }
+        if (!map[key]) map[key] = { ts, label, sum:0, n:0 };
+        map[key].sum += val(h); map[key].n++;
+      });
+      const arr = Object.values(map).sort((a,b) => a.ts - b.ts);
+      arr.forEach(p => p.avg = p.sum / p.n);
+      return arr.slice(-12);   // แสดงไม่เกิน 12 ช่วงล่าสุด
+    }
+
+    function trendSmoothPath(pts){
+      if (!pts.length) return '';
+      if (pts.length === 1) return `M${pts[0].x},${pts[0].y}`;
+      let d = `M${pts[0].x},${pts[0].y}`;
+      for (let i=0;i<pts.length-1;i++){
+        const p0 = pts[i-1]||pts[i], p1 = pts[i], p2 = pts[i+1], p3 = pts[i+2]||p2;
+        const c1x = p1.x + (p2.x-p0.x)/6, c1y = p1.y + (p2.y-p0.y)/6;
+        const c2x = p2.x - (p3.x-p1.x)/6, c2y = p2.y - (p3.y-p1.y)/6;
+        d += ` C${c1x.toFixed(1)},${c1y.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${p2.x},${p2.y}`;
+      }
+      return d;
+    }
+
+    function renderTrend(){
+      const body = document.getElementById('trend-body');
+      if (!body) return;
+      const wk = document.getElementById('trend-week'), mo = document.getElementById('trend-month');
+      if (wk) wk.classList.toggle('active', trendMode==='week');
+      if (mo) mo.classList.toggle('active', trendMode==='month');
+
+      const data = trendPeriods(readHist(), trendMode);
+      const subEl = document.getElementById('trend-sub');
+      const unit = trendMode==='week' ? 'สัปดาห์' : 'เดือน';
+
+      if (!data.length){
+        body.innerHTML = '<div class="trend-empty"><i class="fa-regular fa-chart-bar fs-1 d-block mb-2 opacity-50"></i>ยังไม่มีข้อมูลพอสำหรับแสดงแนวโน้ม</div>';
+        if (subEl) subEl.textContent = '—';
+        return;
+      }
+
+      const overall = data.reduce((s,p)=>s+p.sum,0) / data.reduce((s,p)=>s+p.n,0);
+      const improve = data.length>1 ? (data[data.length-1].avg - data[0].avg) : 0;
+      if (subEl){
+        const dir = improve>0.05 ? '<span class="text-success">▲ ดีขึ้น</span>'
+                  : improve<-0.05 ? '<span class="text-danger">▼ ลดลง</span>'
+                  : '<span class="text-muted">— คงที่</span>';
+        subEl.innerHTML = `${data.length} ${unit}ล่าสุด · เฉลี่ยรวม <b>${overall.toFixed(1)}/2</b> · แนวโน้ม ${dir} (${improve>0?'+':''}${improve.toFixed(1)})`;
+      }
+
+      const W=720, H=264, padL=42, padR=18, padT=22, padB=48;
+      const plotW = W-padL-padR, plotH = H-padT-padB, n = data.length;
+      const x = i => n===1 ? padL+plotW/2 : padL + i*(plotW/(n-1));
+      const y = v => padT + (1 - Math.max(0,Math.min(2,v))/2) * plotH;
+      const maxN = Math.max.apply(null, data.map(p=>p.n).concat(1));
+
+      let grid='';
+      [0,1,2].forEach(v => { const yy=y(v);
+        grid += `<line class="trend-grid" x1="${padL}" y1="${yy.toFixed(1)}" x2="${W-padR}" y2="${yy.toFixed(1)}"/>`
+              + `<text class="trend-axis" x="${padL-8}" y="${(yy+4).toFixed(1)}" text-anchor="end">${v}</text>`;
+      });
+
+      const barW = Math.max(6, Math.min(26, plotW/n*0.46));
+      let vol='';
+      data.forEach((p,i) => { const bh=(p.n/maxN)*(plotH*0.4);
+        vol += `<rect class="trend-vol" x="${(x(i)-barW/2).toFixed(1)}" y="${(padT+plotH-bh).toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" rx="4"/>`;
+      });
+
+      const pts = data.map((p,i)=>({ x:x(i), y:y(p.avg) }));
+      const line = trendSmoothPath(pts);
+      const area = line + ` L${x(n-1).toFixed(1)},${(padT+plotH).toFixed(1)} L${x(0).toFixed(1)},${(padT+plotH).toFixed(1)} Z`;
+
+      let dots='', labels='', xlabels='';
+      data.forEach((p,i)=>{
+        dots  += `<circle class="trend-dot" cx="${x(i).toFixed(1)}" cy="${y(p.avg).toFixed(1)}" r="5"><title>${p.label}: ${p.avg.toFixed(2)}/2 (${p.n} ครั้ง)</title></circle>`;
+        labels+= `<text class="trend-val" x="${x(i).toFixed(1)}" y="${(y(p.avg)-12).toFixed(1)}">${p.avg.toFixed(1)}</text>`;
+        xlabels += `<text class="trend-axis" x="${x(i).toFixed(1)}" y="${H-padB+18}" text-anchor="middle">${p.label}</text>`
+                +  `<text class="trend-axis trend-vol-lbl" x="${x(i).toFixed(1)}" y="${H-padB+32}" text-anchor="middle">${p.n} ครั้ง</text>`;
+      });
+
+      body.innerHTML =
+        `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="กราฟแนวโน้มคะแนนเฉลี่ย">
+          <defs>
+            <linearGradient id="trendStroke" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#4f46e5"/><stop offset="1" stop-color="#06b6d4"/></linearGradient>
+            <linearGradient id="trendArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(99,102,241,.30)"/><stop offset="1" stop-color="rgba(99,102,241,0)"/></linearGradient>
+          </defs>
+          ${grid}${vol}
+          <path d="${area}" fill="url(#trendArea)"/>
+          <path class="trend-line" d="${line}" fill="none" stroke="url(#trendStroke)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+          ${dots}${labels}${xlabels}
+        </svg>`;
     }
 
     // ภาพรวมผลการประเมิน: โดนัท (conic) + คะแนนเฉลี่ยตรงกลาง + การ์ดหมวด + แถบสัดส่วน
