@@ -550,6 +550,36 @@
     .tsum-table tr.tr-bad  { background:#fff5f6; }
     .tsum-table tr.tr-none td { color:#98a2b8; }
 
+    /* ตารางตรวจความเที่ยงการพูด (รายคำ) — ใต้ปุ่มเลือกคำในห้องฝึก */
+    .speech-check { margin-top:18px; border:1px solid #e5e9f2; border-radius:14px; background:#fbfcff; padding:12px 12px 6px; }
+    .sc-head { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:6px; font-weight:700; color:#1f3d7a; font-size:1.02rem; }
+    .sc-total b { color:#0f766e; }
+    .sc-hint { font-size:.86rem; color:#64748b; margin:4px 0 8px; }
+    .sc-table { font-size:.96rem; }
+    .sc-table thead th { background:#eef3fb; color:#334155; font-weight:700; white-space:nowrap; font-size:.9rem; }
+    .sc-table td, .sc-table th { padding:6px 8px; vertical-align:middle; }
+    .sc-word { font-weight:700; color:#1f2937; cursor:pointer; white-space:nowrap; }
+    .sc-word:hover { color:#2563eb; text-decoration:underline; }
+    .sc-row.sc-active { background:#eaf1ff; }
+    .sc-row.sc-active .sc-word { color:#1d4ed8; }
+    .sc-syls { display:flex; flex-wrap:wrap; gap:4px; max-width:280px; }
+    .sc-syl { display:inline-block; padding:2px 8px; border-radius:8px; font-weight:700; font-size:.92rem; background:#eef2f7; color:#64748b; border:1px solid #e2e8f0; }
+    .sc-syl.sc-on { background:#dcfce7; color:#15803d; border-color:#bbf7d0; }
+    .sc-syl.sc-off { background:#fff1f2; color:#be123c; border-color:#fecdd3; }
+    .sc-heard { color:#475569; }
+    .sc-tag { font-size:.72rem; background:#fef3c7; color:#92400e; padding:1px 6px; border-radius:6px; font-weight:700; white-space:nowrap; }
+    .sc-scoreval { font-size:1.02rem; }
+    .sc-adjust { white-space:nowrap; }
+    .sc-btn { width:30px; height:30px; border:1px solid #cbd5e1; background:#fff; border-radius:8px; font-weight:800; font-size:1.05rem; line-height:1; color:#334155; cursor:pointer; margin:0 1px; }
+    .sc-btn:hover { background:#eef2ff; border-color:#93c5fd; color:#1d4ed8; }
+    .sc-btn-reset { color:#b45309; }
+    .sc-btn-reset:hover { background:#fff7ed; border-color:#fdba74; color:#b45309; }
+    @media (max-width:600px){
+      .sc-table { font-size:.9rem; }
+      .sc-syl { font-size:.85rem; padding:2px 6px; }
+      .sc-btn { width:28px; height:28px; font-size:1rem; }
+    }
+
     /* หมวดหมู่คำที่จะฝึก (หัวข้อ 5) */
     .word-group { width:100%; }
     .word-group-title {
@@ -2331,6 +2361,7 @@
               </div>
             </div>
             <div id="words-grid" class="word-grid"></div>
+            <div id="speech-check" class="speech-check d-none-h"></div>
           </div>
         </div>
 
@@ -2397,7 +2428,6 @@
           <label class="form-label fw-bold">รหัสผ่าน</label>
           <input id="login-pass" type="password" class="form-control search-input" placeholder="password" autocomplete="current-password" onkeydown="if(event.key==='Enter') nurseLogin()">
           <div id="login-error" class="text-danger fw-bold mt-3 d-none-h"><i class="fa-solid fa-triangle-exclamation"></i> ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง</div>
-          <div class="helper-line mt-3" style="font-size:.9rem;"><i class="fa-solid fa-circle-info"></i> ทดลอง: nurse / 1234 หรือ admin / admin</div>
         </div>
         <div class="modal-footer">
           <button class="btn btn-light btn-xl" data-bs-dismiss="modal">ยกเลิก</button>
@@ -3403,6 +3433,7 @@
     const asNote = document.getElementById('auto-score-note');
     if (asNote) asNote.classList.toggle('d-none-h', !data.hasAudio);
     renderTopicResultSummary();   // ตารางสรุปผลของหัวข้อนี้
+    renderSpeechCheck();          // ตารางตรวจความเที่ยงการพูด (รายคำ)
 
     const videoSection = document.getElementById('video-section');
     const audioSection = document.getElementById('audio-section');
@@ -3478,6 +3509,7 @@
       } else if (rb){ rb.remove(); }
     });
     renderTopicResultSummary();   // อัปเดตตารางสรุปหัวข้อนี้ทุกครั้งที่คะแนนเปลี่ยน
+    renderSpeechCheck();          // อัปเดตตารางตรวจความเที่ยงการพูด (รายคำ)
   }
 
   // ล้างคะแนนของคำ (เผื่อไมค์ประมวลผลผิด) → กลับเป็น "ยังไม่ประเมิน" แล้วพูดใหม่ได้
@@ -3495,6 +3527,74 @@
     if (!selectedWord){ alert("กรุณาเลือกคำที่จะรีเซ็ตก่อนครับ"); return; }
     if (!spokenLog.some(x => x.word === selectedWord)){ alert('คำ "' + selectedWord + '" ยังไม่มีคะแนนในรอบนี้'); return; }
     resetWordScore(selectedWord);
+  }
+
+  /* ตารางตรวจความเที่ยงการพูด (รายคำ) — ใต้ปุ่มเลือกคำ · ประมวลผลอัตโนมัติหลังพูดทุกครั้ง */
+  function renderSpeechCheck(){
+    const el = document.getElementById('speech-check');
+    if (!el) return;
+    const t = topicsData[currentTopicNum];
+    if (!t || !(t.words && t.words.length)){ el.classList.add('d-none-h'); el.innerHTML = ''; return; }
+    el.classList.remove('d-none-h');
+    const q = s => String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    let totGot = 0, totMax = 0;
+    const rows = t.words.map((w, i) => {
+      const syl = wordSyllables(w);
+      const max = wordMaxScore(w);
+      const log = spokenLog.find(x => x.word === w);
+      const got = wordScoreInfo(w).got;                    // null = ยังไม่ประเมิน
+      totMax += max; totGot += (got || 0);
+      const flags = (log && log.flags) || syl.map((_, k) => got != null && k < got);
+      const chips = syl.map((s, k) => {
+        const st = got == null ? 'sc-syl' : (flags[k] ? 'sc-syl sc-on' : 'sc-syl sc-off');
+        return `<span class="${st}">${escapeHtml(s)}</span>`;
+      }).join('');
+      const heardTxt = (log && log.heard)
+        ? `“${escapeHtml(log.heard)}”${log.manual ? ' <span class="sc-tag">ปรับเอง</span>' : ''}`
+        : '<span class="text-muted">—</span>';
+      const scoreCls = got == null ? 'text-muted' : got >= max ? 'text-success' : got > 0 ? 'text-warning' : 'text-danger';
+      const scoreTxt = got == null ? `–/${max}` : `${got}/${max}`;
+      const active = (w === selectedWord) ? ' sc-active' : '';
+      return `<tr class="sc-row${active}">
+        <td class="text-center text-muted">${i + 1}</td>
+        <td class="sc-word" onclick="selectWord('${q(w)}')" title="เลือกคำนี้ไปฝึก">${escapeHtml(w)}</td>
+        <td class="sc-syls">${chips}</td>
+        <td class="sc-heard">${heardTxt}</td>
+        <td class="text-center fw-bold ${scoreCls}"><span class="sc-scoreval">${scoreTxt}</span><small class="text-muted"> พยางค์</small></td>
+        <td class="text-center sc-adjust">
+          <button type="button" class="sc-btn" title="ลด 1 พยางค์" onclick="adjustWordScore('${q(w)}',-1)">−</button>
+          <button type="button" class="sc-btn" title="เพิ่ม 1 พยางค์" onclick="adjustWordScore('${q(w)}',1)">＋</button>
+          <button type="button" class="sc-btn sc-btn-reset" title="ล้างคะแนนคำนี้ (พูดใหม่)" onclick="resetWordScore('${q(w)}')"><i class="fa-solid fa-rotate-left"></i></button>
+        </td>
+      </tr>`;
+    }).join('');
+    const pct = totMax ? Math.round(totGot / totMax * 100) : 0;
+    el.innerHTML = `
+      <div class="sc-head">
+        <span><i class="fa-solid fa-crosshairs me-1"></i> ตารางตรวจความเที่ยงการพูด (รายคำ)</span>
+        <span class="sc-total">รวม <b>${totGot}/${totMax}</b> พยางค์ (${pct}%)</span>
+      </div>
+      <div class="sc-hint"><i class="fa-solid fa-circle-info me-1"></i> ระบบประเมิน<b>อัตโนมัติจากไมค์</b> โดยนับเฉพาะพยางค์ที่พูดได้จริง · ถ้าระบบฟังคลาดเคลื่อน กด <b>−/＋</b> ปรับให้ตรงกับที่พูดจริงได้</div>
+      <div class="table-responsive">
+        <table class="table table-sm align-middle sc-table mb-0">
+          <thead><tr><th style="width:32px;">#</th><th>คำ</th><th>พยางค์ที่พูดได้</th><th>ระบบได้ยินว่า</th><th class="text-center">คะแนน</th><th class="text-center">ปรับ</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  }
+
+  /* ปรับคะแนนพยางค์รายคำด้วยมือ (เผื่อไมค์ฟังคลาดเคลื่อน) — เพื่อให้เที่ยงตรงกับที่ผู้ป่วยพูดจริง */
+  function adjustWordScore(word, delta){
+    if (!word) return;
+    const max = wordMaxScore(word);
+    const got = Math.max(0, Math.min(max, (wordScoreInfo(word).got || 0) + delta));
+    const flags = wordSyllables(word).map((_, k) => k < got);
+    const idx = spokenLog.findIndex(x => x.word === word);
+    const heard = (idx >= 0 && spokenLog[idx].heard) ? spokenLog[idx].heard : '(ปรับด้วยมือ)';
+    const entry = { word, heard, got, max, flags, manual: true };
+    if (idx >= 0) spokenLog[idx] = entry; else spokenLog.push(entry);
+    renderSpokenNote();
+    refreshWordScores();
   }
 
   function buildWordGrid(words, onSelectExtra){
@@ -3550,6 +3650,7 @@
     document.querySelectorAll('.word-badge').forEach(b => b.classList.toggle('active', b.dataset.word === w));
     resetEval();
     document.getElementById('speech-output').innerText = "-";
+    renderSpeechCheck();   // ไฮไลต์แถวคำที่กำลังฝึกในตารางตรวจความเที่ยง
   }
 
   // แสดง/ซ่อนภาพประกอบ (อีโมจิ) ของคำที่กำลังฝึก
@@ -3748,46 +3849,72 @@
     return 1 - dp[m][n] / Math.max(m, n);
   }
 
+  /* ----------------------------------------------------------------------------
+     ตรวจ "ความเที่ยง" การพูดแบบเข้มงวด — นับเฉพาะพยางค์ที่พูดได้จริง (ทีละพยางค์)
+     แก้ปัญหา: พูด 2 พยางค์ แต่เดิมได้ 4  (เพราะให้เครดิตเต็มคำจากความคล้ายทั้งคำ)
+     - ไม่ให้เครดิตเต็มคำจาก fuzzy ≥0.5 หรือ substring อีกต่อไป
+     - นับพยางค์จากต้นคำ โดย "กินตัวอักษรตามจริง" จึงรับรู้ว่าเสียงที่พูดสั้น/ยาวแค่ไหน
+     - ใช้เสียงหลัก (primary transcript) เป็นตัวตัดสิน กัน ASR เดาต่อเป็นคำเต็ม
+     ---------------------------------------------------------------------------- */
+  function matchSyllable(remaining, syl){
+    // remaining, syl : normalize แล้ว → คืนจำนวนตัวอักษรที่กินไป ถ้าจับพยางค์นี้ได้, ไม่ได้ = -1
+    if (!remaining || !syl) return -1;
+    if (remaining.startsWith(syl)) return syl.length;
+    if (syl.length >= 2 && similarity(remaining.slice(0, syl.length), syl) >= 0.6) return syl.length;
+    for (let sh = 1; sh <= 2; sh++){                       // เผื่อ ASR แทรก/เลื่อน 1–2 ตัวอักษร
+      if (remaining.slice(sh).startsWith(syl)) return sh + syl.length;
+      if (syl.length >= 2 && similarity(remaining.slice(sh, sh + syl.length), syl) >= 0.75) return sh + syl.length;
+    }
+    return -1;
+  }
+  // จับพยางค์ทีละพยางค์ "ตามลำดับ" จากเสียงที่ได้ยิน — คืน flags ต่อพยางค์ (true = พูดได้)
+  function alignSyllables(heard, nsyl){
+    const N = nsyl.length;
+    const flags = new Array(N).fill(false);
+    let cursor = 0;
+    for (let i = 0; i < N; i++){
+      const s = nsyl[i];
+      const limit = Math.min(heard.length - 1, cursor + s.length + 2);   // ค้นในหน้าต่างแคบ ๆ กันจับมั่ว
+      for (let pos = cursor; pos <= limit; pos++){
+        const consumed = matchSyllable(heard.slice(pos), s);
+        if (consumed >= 0){ flags[i] = true; cursor = pos + consumed; break; }
+      }
+      // ถ้าพยางค์นี้ไม่เจอ (ผู้ป่วยข้าม/ออกเสียงไม่ชัด) → ไม่เลื่อน cursor เผื่อไปเจอพยางค์ถัดไป
+    }
+    return flags;
+  }
+  function scoreSyllablesStrict(target, candidates){
+    const syl  = wordSyllables(target);
+    const maxN = syl.length;
+    const nsyl = syl.map(normalize);
+    const fullN = nsyl.join('');
+    const forms = acceptableForms(target);                 // normalize แล้ว (คำต้นแบบ + คำพ้อง)
+    const all = (candidates && candidates.length ? candidates : []).map(normalize).filter(Boolean);
+    const primary = all[0] || '';
+    if (!primary) return { got: 0, maxN, flags: syl.map(() => false), heardBest: '' };
+
+    // (1) เสียงหลักตรงคำเต็ม/คำพ้อง → ครบทุกพยางค์
+    //     ยกเว้น "รูปย่อที่เป็นต้นคำ" (เช่น มกรา ↔ มกราคม, พฤหัส ↔ วันพฤหัสบดี) ที่ต้องนับพยางค์จริง
+    const exact = forms.find(f => f && f === primary);
+    if (exact){
+      const isShortPrefix = exact.length < fullN.length && fullN.startsWith(exact);
+      if (!isShortPrefix) return { got: maxN, maxN, flags: syl.map(() => true), heardBest: primary };
+    }
+
+    // (2) นับเฉพาะพยางค์ที่พูดได้จริง — จับทีละพยางค์ตามลำดับจากเสียงหลัก (ไม่ให้เครดิตเต็มคำจากความคล้าย)
+    const flags = alignSyllables(primary, nsyl);
+    const got = flags.reduce((n, f) => n + (f ? 1 : 0), 0);
+    return { got, maxN, flags, heardBest: primary };
+  }
+
   function evaluateSpokenText(spoken, alts){
     const box = document.getElementById('eval-box');
     box.classList.remove('d-none-h');
     const target = selectedWord;
-
-    // เทียบทุกตัวเลือกที่ระบบได้ยิน (maxAlternatives) กับทุกรูปแบบที่ยอมรับ (คำต้นแบบ + คำพ้อง)
-    const forms = acceptableForms(target);
     const candidates = (alts && alts.length ? alts : [spoken]);
-    let best = spoken, bestScore = 0, exactHit = false;
 
-    candidates.forEach(c => {
-      const nc = normalize(c);
-      if (!nc) return;
-      forms.forEach(fn => {
-        let s = similarity(nc, fn);
-        if (nc === fn){ s = 1; exactHit = true; }
-        else {
-          // ให้เครดิตกรณีพูดสั้น/ยาวกว่าเล็กน้อยแต่เป็นส่วนหลักของคำ (เช่น "มกรา" ↔ "มกราคม")
-          const shorter = nc.length <= fn.length ? nc : fn;
-          const longer  = nc.length <= fn.length ? fn : nc;
-          if (shorter.length >= 2 && longer.includes(shorter) && (shorter.length / longer.length) >= 0.5)
-            s = Math.max(s, 0.9);
-        }
-        if (s > bestScore){ bestScore = s; best = c; }
-      });
-    });
-
-    // ให้คะแนนทีละพยางค์: นับพยางค์ (จากต้นคำ) ที่พูดได้ · เต็มคำ = ครบทุกพยางค์
-    const syl = wordSyllables(target);
-    const maxN = syl.length;
-    const ncs = candidates.map(normalize).filter(Boolean);
-    let got = 0;
-    if (exactHit || bestScore >= 0.5){        // จับคู่เต็มคำ (รวมคำพ้อง) → ครบทุกพยางค์
-      got = maxN;
-    } else if (maxN > 1){                     // จับพยางค์บางส่วน (prefix)
-      for (let k = maxN; k >= 1; k--){
-        const prefix = normalize(syl.slice(0, k).join(''));
-        if (prefix && ncs.some(nc => nc === prefix || nc.includes(prefix) || similarity(nc, prefix) >= 0.85)){ got = k; break; }
-      }
-    }
+    const res  = scoreSyllablesStrict(target, candidates);
+    const got  = res.got, maxN = res.maxN;
 
     if (got >= maxN){
       box.className = "result-box result-good";
@@ -3803,16 +3930,17 @@
       speak("ลองอีกครั้งนะครับ", 1);
     }
 
-    logSpokenResult(target, spoken, got, maxN);
+    logSpokenResult(target, spoken, got, maxN, res.flags);
   }
 
   /* บันทึกผลการพูดสะสม (1 บรรทัดต่อ 1 คำ, พูดซ้ำ = อัปเดตครั้งล่าสุด) แล้วให้คะแนนเฉลี่ยตามการพูดทั้งหมด */
-  function logSpokenResult(word, heard, got, max){
+  function logSpokenResult(word, heard, got, max, flags){
     const idx = spokenLog.findIndex(x => x.word === word);
-    const entry = { word, heard, got: got|0, max: max|0 || 1 };
+    const m = max|0 || 1;
+    const entry = { word, heard, got: got|0, max: m, flags: flags || wordSyllables(word).map((_,k)=> k < (got|0)), manual: false };
     if (idx >= 0) spokenLog[idx] = entry; else spokenLog.push(entry);
     renderSpokenNote();
-    refreshWordScores();   // อัปเดตคะแนนบนปุ่มคำทันทีที่พูด
+    refreshWordScores();   // อัปเดตคะแนนบนปุ่มคำ + ตารางตรวจความเที่ยง ทันทีที่พูด
   }
 
   // สรุปว่าแต่ละคำพูดได้กี่พยางค์ ลงช่องบันทึก
