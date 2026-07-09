@@ -543,6 +543,12 @@
     .tsum-mid  { background:#fff6e6; color:#b45309; border-color:#f6d590; }
     .tsum-bad  { background:#fff0f3; color:#be123c; border-color:#f6c6cf; }
     .tsum-none { background:#f3f4f8; color:#94a3b8; }
+    .tsum-lists { margin-bottom:8px; display:grid; gap:2px; font-size:.92rem; }
+    .tsum-table td, .tsum-table th { padding:5px 8px; }
+    .tsum-table tr.tr-good { background:#f2fdf9; }
+    .tsum-table tr.tr-mid  { background:#fffaf0; }
+    .tsum-table tr.tr-bad  { background:#fff5f6; }
+    .tsum-table tr.tr-none td { color:#98a2b8; }
 
     /* หมวดหมู่คำที่จะฝึก (หัวข้อ 5) */
     .word-group { width:100%; }
@@ -4134,14 +4140,36 @@
     for (let tn = 4; tn <= 6; tn++){
       const t = topicsData[tn]; if (!t || !(t.words && t.words.length)) continue;
       const map = itemLatestMap(patient.id, tn);
-      const chips = t.words.map(w => {
+      const okFull = [], okPart = [], notOk = [], notYet = [];
+      const rows = t.words.map((w, i) => {
+        const wmax = wordMaxScore(w);
         const info = map[w];
-        if (!info) return `<span class="tsum-chip tsum-none">${escapeHtml(w)} <b>–/${wordMaxScore(w)}</b></span>`;
-        const cls = info.got >= info.max ? 'tsum-good' : info.got > 0 ? 'tsum-mid' : 'tsum-bad';
-        const em  = info.got >= info.max ? '✅' : info.got > 0 ? '⚠️' : '❌';
-        return `<span class="tsum-chip ${cls}">${em} ${escapeHtml(w)} <b>${info.got}/${info.max}</b></span>`;
+        let em, st, cls, got = '–', max = wmax;
+        if (!info){ em = '⬜'; st = 'ยังไม่ประเมิน'; cls = 'tr-none'; notYet.push(w); }
+        else {
+          got = info.got; max = info.max;
+          if (info.got >= info.max){ em = '✅'; st = 'พูดได้'; cls = 'tr-good'; okFull.push(w); }
+          else if (info.got > 0){ em = '⚠️'; st = 'พูดได้บางส่วน'; cls = 'tr-mid'; okPart.push(w); }
+          else { em = '❌'; st = 'ยังพูดไม่ได้'; cls = 'tr-bad'; notOk.push(w); }
+        }
+        return `<tr class="${cls}"><td class="text-center">${i+1}</td><td class="fw-bold">${escapeHtml(w)}</td><td class="text-center">${wmax}</td><td class="text-center fw-bold">${got}/${max}</td><td>${em} ${st}</td></tr>`;
       }).join('');
-      html += `<div class="tsum-topic"><div class="tsum-topic-h">${escapeHtml(t.title)} <small class="text-muted">(ประเมินแล้ว ${Object.keys(map).length}/${t.words.length} คำ)</small></div><div class="tsum-chips">${chips}</div></div>`;
+      const list = (label, arr, cls) => arr.length ? `<div><span class="${cls} fw-bold">${label} (${arr.length}):</span> ${arr.map(escapeHtml).join(', ')}</div>` : '';
+      html += `<div class="tsum-topic">
+        <div class="tsum-topic-h">${escapeHtml(t.title)} — พูดได้ <b class="text-success">${okFull.length}/${t.words.length} คำ</b></div>
+        <div class="tsum-lists">
+          ${list('✅ พูดได้', okFull, 'text-success')}
+          ${list('⚠️ พูดได้บางส่วน', okPart, 'text-warning')}
+          ${list('❌ ยังพูดไม่ได้', notOk, 'text-danger')}
+          ${list('⬜ ยังไม่ประเมิน', notYet, 'text-muted')}
+        </div>
+        <div class="table-responsive">
+          <table class="table table-sm align-middle tsum-table">
+            <thead><tr><th style="width:44px;">#</th><th>คำ</th><th class="text-center">พยางค์</th><th class="text-center">คะแนน</th><th>สถานะ</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      </div>`;
       any = true;
     }
     if (!any) html += '<div class="text-muted">ยังไม่มีข้อมูลรายคำ</div>';
