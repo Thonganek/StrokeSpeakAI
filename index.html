@@ -1878,6 +1878,95 @@
 
     /* ---- สรุปผล ---- */
     .summary-report .prog-stat{ height:100%; }
+
+    /* ============================================================
+       ✦ Responsive — โทรศัพท์ & ไอแพด (พอดีจอ ใช้ง่าย) ✦
+       ============================================================ */
+    html, body { max-width:100%; overflow-x:hidden; }
+    img, svg, table, .table-responsive { max-width:100%; }
+
+    /* ---- ไอแพด / แท็บเล็ต (≤1024px) ---- */
+    @media (max-width:1024px){
+      .app-shell, .training-shell { width:min(100%, calc(100% - 22px)); margin:18px auto 32px; }
+      .dashboard-hero { grid-template-columns:1fr; }
+      .training-shell { grid-template-columns:1fr; }
+      .training-rail { position:static; top:auto; }
+      .metric-number, .focus-value { font-size:2.4rem; }
+      .hero-title { font-size:2rem; }
+      .ov-grid { grid-template-columns:200px 1fr; }
+      .audio-stage, .recognition-grid { grid-template-columns:1fr !important; }
+    }
+
+    /* ---- แท็บเล็ตแนวตั้ง / มือถือใหญ่ (≤768px) ---- */
+    @media (max-width:768px){
+      .app-topbar-inner { min-height:auto; padding:12px 16px; gap:10px; flex-wrap:wrap; }
+      .brand-title { font-size:1.1rem; }
+      .brand-kicker { font-size:.78rem; }
+      .brand-mark { width:44px; height:44px; flex:0 0 44px; }
+      .topbar-status { width:100%; justify-content:flex-start; }
+      .metrics-grid { grid-template-columns:repeat(2, minmax(0,1fr)); gap:12px; }
+      .metric-card { padding:16px; min-height:auto; }
+      .metric-number { font-size:2rem; }
+      .hero-panel { padding:22px; }
+      .hero-title { font-size:1.7rem; }
+      .ov-grid { grid-template-columns:1fr; gap:16px; }
+      .ov-donut { width:180px; height:180px; }
+      .directory-panel { padding:16px; }
+      .panel-head { flex-direction:column; align-items:stretch; }
+      .panel-actions { justify-content:flex-start; }
+      .roster-toolbar { flex-direction:column; align-items:stretch; }
+      .roster-chips { overflow-x:auto; flex-wrap:nowrap; padding-bottom:4px; -webkit-overflow-scrolling:touch; }
+      .roster-chip { flex:0 0 auto; }
+      .roster-controls { justify-content:space-between; }
+      .roster-select { flex:1 1 auto; }
+      .roster-pager { justify-content:space-between; }
+    }
+
+    /* ---- ตารางผู้ป่วย → การ์ด (โทรศัพท์ ≤680px) ---- */
+    @media (max-width:680px){
+      .pt-table thead { display:none; }
+      .pt-table, .pt-table tbody, .pt-table tr, .pt-table td { display:block; width:100%; }
+      .pt-table { box-shadow:none; border-radius:0; overflow:visible; }
+      .pt-table tr { border:1px solid var(--line); border-left:5px solid var(--primary);
+        border-radius:14px; margin-bottom:12px; padding:2px 2px 8px; background:#fff; box-shadow:var(--shadow-sm); }
+      .pt-table tr.pt-fail { border-left-color:var(--bad); }
+      .pt-table tr.pt-deceased { border-left-color:#94a3b8; }
+      .pt-table td { border:0; padding:6px 14px; text-align:left; }
+      .pt-table td::before { content:attr(data-label); display:block; font-weight:800; color:var(--muted); font-size:.78rem; margin-bottom:2px; }
+      .pt-table td.pt-namecell { padding:12px 14px 10px; border-bottom:1px solid var(--line); margin-bottom:2px; }
+      .pt-table td.pt-namecell::before { display:none; }
+      .pt-table td.pt-actions { display:flex; flex-wrap:wrap; gap:8px; padding-top:10px; }
+      .pt-table td.pt-actions::before { display:none; }
+      .pt-actions .pt-btn { flex:1 1 40%; margin:0 !important; }
+      .pt-actions .pt-btn:first-child { flex:1 1 100%; }
+    }
+
+    /* ---- โทรศัพท์ทั่วไป (≤600px) ---- */
+    @media (max-width:600px){
+      body { font-size:17px; }
+      .app-shell, .training-shell { width:calc(100% - 14px); margin:12px auto 26px; }
+      .metric-number { font-size:1.8rem; }
+      .metric-label { font-size:.86rem; }
+      .hero-title { font-size:1.5rem; }
+      .hero-actions .btn { width:100%; }
+      .practice-panel, .assessment-panel, .training-workspace, .training-rail, .card-soft, .directory-panel { padding:15px !important; }
+      .word-hero { font-size:2.9rem; }
+      .word-illus { font-size:3.2rem; }
+      .btn-huge { min-height:70px; font-size:1.2rem; }
+      .modal-dialog { margin:8px; }
+      .modal-xl, .modal-lg, .modal-dialog { max-width:calc(100% - 16px); }
+      .modal-header { flex-wrap:wrap; gap:8px; }
+      .prog-chart, .trend-body svg { min-width:430px; }
+    }
+
+    /* ---- โทรศัพท์เล็ก (≤400px) ---- */
+    @media (max-width:400px){
+      body { font-size:16px; }
+      .metrics-grid { grid-template-columns:1fr; }
+      .word-hero { font-size:2.3rem; }
+      .roster-chip { font-size:.86rem; padding:7px 11px; }
+      .btn-xl { font-size:1.02rem; padding:13px 14px; }
+    }
   </style>
 </head>
 <body>
@@ -2837,7 +2926,7 @@
       // ผู้ป่วยเสียชีวิต — ไม่กดเข้าห้องฝึก, ทำสีจาง, มีป้ายกำกับ + วันที่
       const dd = p.deceasedDate ? new Date(p.deceasedDate).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'}) : '';
       return `<tr class="pt-tr pt-deceased" title="ผู้ป่วยเสียชีวิต">
-        <td onclick="event.stopPropagation()">
+        <td class="pt-namecell" onclick="event.stopPropagation()">
           <div class="pt-cell-name">
             <div class="avatar-icon avatar-sm pt-avatar-dead"><i class="fa-solid fa-dove"></i></div>
             <div>
@@ -2846,10 +2935,10 @@
             </div>
           </div>
         </td>
-        <td class="text-center fw-bold">${p.age||'-'}</td>
-        <td>${dx}</td>
-        <td class="text-center">${scoreCell}</td>
-        <td>${ dd ? `<div class="pt-when">เสียชีวิต</div><small class="text-muted">${dd}</small>` : '<span class="text-muted">—</span>' }</td>
+        <td class="text-center fw-bold" data-label="อายุ">${p.age||'-'}</td>
+        <td data-label="การวินิจฉัย">${dx}</td>
+        <td class="text-center" data-label="ผลล่าสุด">${scoreCell}</td>
+        <td data-label="สถานะ">${ dd ? `<div class="pt-when">เสียชีวิต</div><small class="text-muted">${dd}</small>` : '<span class="text-muted">—</span>' }</td>
         <td class="pt-actions text-end" onclick="event.stopPropagation()">
           <button class="btn btn-outline-secondary pt-btn" title="ดูประวัติ/ความก้าวหน้า" onclick="openProgress('${p.id}')"><i class="fa-solid fa-chart-line"></i></button>
           <button class="btn btn-outline-secondary pt-btn" title="แก้ไข/กู้สถานะ" onclick="openEditPatient('${p.id}')"><i class="fa-solid fa-pen"></i></button>
@@ -2859,7 +2948,7 @@
     }
     const rowCls = lastPts === 0 ? 'pt-tr pt-fail' : 'pt-tr';
     return `<tr class="${rowCls}" onclick="enterTrainingById('${p.id}','view-dashboard')" title="กดเพื่อเข้าห้องฝึกของผู้ป่วยรายนี้">
-      <td>
+      <td class="pt-namecell">
         <div class="pt-cell-name">
           <div class="avatar-icon avatar-sm">${letter}</div>
           <div>
@@ -2868,10 +2957,10 @@
           </div>
         </div>
       </td>
-      <td class="text-center fw-bold">${p.age||'-'}</td>
-      <td>${dx}</td>
-      <td class="text-center">${scoreCell}</td>
-      <td>${assessedCell}</td>
+      <td class="text-center fw-bold" data-label="อายุ">${p.age||'-'}</td>
+      <td data-label="การวินิจฉัย">${dx}</td>
+      <td class="text-center" data-label="ผลล่าสุด">${scoreCell}</td>
+      <td data-label="ประเมินล่าสุด">${assessedCell}</td>
       <td class="pt-actions text-end" onclick="event.stopPropagation()">
         <button class="btn btn-primary pt-btn" onclick="enterTrainingById('${p.id}','view-dashboard')">เริ่มฝึก <i class="fa-solid fa-chevron-right"></i></button>
         <button class="btn btn-outline-secondary pt-btn" title="ความก้าวหน้า" onclick="openProgress('${p.id}')"><i class="fa-solid fa-chart-line"></i></button>
