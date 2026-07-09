@@ -2217,9 +2217,9 @@
         <div id="patient-dx" class="hn-chip d-inline-block mb-2 d-none-h" style="background:#fff3f2;color:#b42318;border-color:#fecdca;"></div>
         <div class="session-pill"><i class="fa-solid fa-floppy-disk"></i> บันทึกรอบนี้: <span id="session-count">0</span> รายการ</div>
         <div id="assess-progress" class="assess-progress">
-          <div class="ap-top"><span><i class="fa-solid fa-list-check me-1"></i> ประเมินให้ครบทุกข้อ</span><span id="ap-count">0/0</span></div>
+          <div class="ap-top"><span><i class="fa-solid fa-list-check me-1"></i> ความคืบหน้าการประเมิน</span><span id="ap-count">0/0</span></div>
           <div class="ap-bar"><div id="ap-fill" class="ap-fill"></div></div>
-          <div id="ap-status" class="ap-status">ต้องประเมินให้ครบทุกคำ/สระในทุกหัวข้อ</div>
+          <div id="ap-status" class="ap-status">บันทึกทีละข้อได้เลย — ไม่จำเป็นต้องประเมินครบทุกข้อ</div>
         </div>
       </div>
       <div class="rail-section-title">เมนูแบบฝึกหัด</div>
@@ -3234,13 +3234,8 @@
   // เผื่อโค้ดเดิมเรียก startTraining / goDashboard
   function startTraining(patientId){ enterTrainingById(patientId, 'view-dashboard'); }
   function goDashboard(){ goBack(); }
-  // แจ้งเตือนถ้ายังประเมินไม่ครบทุกข้อ — คืน true ถ้าให้ออกได้
-  function confirmLeaveTraining(){
-    const miss = missingItems();
-    if (!miss.length) return true;
-    const preview = miss.slice(0,12).map(m => '• ' + m.label).join('\n') + (miss.length>12 ? '\n…และอีก ' + (miss.length-12) + ' รายการ' : '');
-    return confirm('⚠️ ยังประเมินไม่ครบทุกข้อ (เหลืออีก ' + miss.length + ' รายการ)\n\n' + preview + '\n\nต้องประเมินให้ครบทุกคำ/สระในทุกหัวข้อ\nยืนยันออกจากห้องฝึกโดยยังไม่ครบหรือไม่?');
-  }
+  // ออกจากห้องฝึกได้อิสระ — บันทึกบางข้อได้เลย ไม่บังคับให้ประเมินครบทุกข้อ
+  function confirmLeaveTraining(){ return true; }
 
   function goBack(){
     if (!confirmLeaveTraining()) return;
@@ -3300,7 +3295,7 @@
     const sEl = document.getElementById('ap-status');
     if (sEl){
       if (done >= total && total > 0){ sEl.innerHTML = '<i class="fa-solid fa-circle-check"></i> ประเมินครบทุกข้อแล้ว'; sEl.classList.add('done'); }
-      else { sEl.innerHTML = 'เหลืออีก <b>' + (total-done) + '</b> รายการ — ต้องประเมินให้ครบทุกคำ/สระในทุกหัวข้อ'; sEl.classList.remove('done'); }
+      else { sEl.innerHTML = 'ประเมินแล้ว <b>' + done + '</b> ข้อ (เหลือ ' + (total-done) + ') — บันทึกบางข้อได้เลย ไม่ต้องครบก็ได้'; sEl.classList.remove('done'); }
     }
     Object.keys(per).forEach(num => {
       const badge = document.querySelector('[data-topicprog="'+num+'"]');
