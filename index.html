@@ -522,6 +522,9 @@
     .wb-score.wb-good { background:#e8fbf4; color:#0f766e; border:1px solid #b7ecdb; }
     .wb-score.wb-mid  { background:#fff6e6; color:#b45309; border:1px solid #f6d590; }
     .wb-score.wb-bad  { background:#fff0f3; color:#be123c; border:1px solid #f6c6cf; }
+    .wb-reset { margin-left:6px; width:26px; height:26px; flex:0 0 26px; padding:0; border-radius:50%;
+      border:1px solid var(--line-strong); background:#fff; color:#64748b; font-size:.78rem; cursor:pointer; line-height:1; }
+    .wb-reset:hover { background:#fff0f3; color:#be123c; border-color:#f6c6cf; }
 
     /* หมวดหมู่คำที่จะฝึก (หัวข้อ 5) */
     .word-group { width:100%; }
@@ -2260,6 +2263,7 @@
               <div class="control-stack">
                 <button class="btn btn-primary btn-huge" onclick="speakCurrentWord()"><i class="fa-solid fa-volume-high"></i> ฟังเสียง</button>
                 <button id="mic-btn" class="btn btn-danger btn-huge" onclick="startListening()"><i class="fa-solid fa-microphone"></i> พูดตาม</button>
+                <button class="btn btn-outline-secondary" onclick="resetCurrentWord()" title="ล้างคะแนนคำนี้ (เผื่อระบบฟังผิด) แล้วพูดใหม่"><i class="fa-solid fa-rotate-left me-1"></i> รีเซ็ตคะแนนคำนี้</button>
                 <div class="speed-control">
                   <div class="text-muted fw-bold mb-2">ความเร็วเสียงต้นแบบ</div>
                   <div class="btn-group" role="group">
@@ -3408,7 +3412,7 @@
     }
     return { got: null, max };
   }
-  // แสดงคะแนนพยางค์รายคำบนปุ่มเลือกคำ (โชว์จำนวนพยางค์ที่ต้องพูดไว้เลย)
+  // แสดงคะแนนพยางค์รายคำบนปุ่มเลือกคำ (โชว์จำนวนพยางค์ที่ต้องพูดไว้เลย) + ปุ่มรีเซ็ตรายคำ
   function refreshWordScores(){
     document.querySelectorAll('#words-grid .word-badge').forEach(b => {
       const w = b.dataset.word;
@@ -3418,7 +3422,35 @@
       const max = info.max, got = info.got;
       if (got == null){ sc.className = 'wb-score wb-none'; sc.textContent = '–/' + max + ' พยางค์'; }
       else { sc.className = 'wb-score ' + (got >= max ? 'wb-good' : got > 0 ? 'wb-mid' : 'wb-bad'); sc.textContent = got + '/' + max + ' พยางค์'; }
+      // ปุ่มรีเซ็ต ↺ เฉพาะคำที่เพิ่งประเมินในรอบนี้ (เผื่อระบบฟังผิด)
+      let rb = b.querySelector('.wb-reset');
+      if (spokenLog.some(x => x.word === w)){
+        if (!rb){
+          rb = document.createElement('button');
+          rb.className = 'wb-reset'; rb.type = 'button'; rb.title = 'รีเซ็ตคะแนนคำนี้';
+          rb.innerHTML = '<i class="fa-solid fa-rotate-left"></i>';
+          rb.onclick = (e) => { e.stopPropagation(); resetWordScore(w); };
+          b.appendChild(rb);
+        }
+      } else if (rb){ rb.remove(); }
     });
+  }
+
+  // ล้างคะแนนของคำ (เผื่อไมค์ประมวลผลผิด) → กลับเป็น "ยังไม่ประเมิน" แล้วพูดใหม่ได้
+  function resetWordScore(word){
+    if (!word) return;
+    const i = spokenLog.findIndex(x => x.word === word);
+    if (i >= 0) spokenLog.splice(i, 1);
+    try { sessionAssessed.delete(itemKey(currentTopicNum, word)); updateAssessmentProgress(); } catch(e){}
+    renderSpokenNote();
+    refreshWordScores();
+    resetEval();
+    const so = document.getElementById('speech-output'); if (so) so.innerText = "-";
+  }
+  function resetCurrentWord(){
+    if (!selectedWord){ alert("กรุณาเลือกคำที่จะรีเซ็ตก่อนครับ"); return; }
+    if (!spokenLog.some(x => x.word === selectedWord)){ alert('คำ "' + selectedWord + '" ยังไม่มีคะแนนในรอบนี้'); return; }
+    resetWordScore(selectedWord);
   }
 
   function buildWordGrid(words, onSelectExtra){
