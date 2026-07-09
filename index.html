@@ -3706,13 +3706,23 @@
 
   // แบ่งพยางค์ของแต่ละคำ (ให้คะแนนทีละพยางค์ · คำละ 1 คะแนนต่อพยางค์) — คำที่ไม่ระบุ = 1 พยางค์
   const WORD_SYLLABLES = {
+    // วันในสัปดาห์  (จันทร์/ทิตย์/ศุกร์/เสาร์ = ตัวสะกดพิเศษ นับเป็น 1 พยางค์)
     "วันจันทร์":["วัน","จันทร์"], "วันอังคาร":["วัน","อัง","คาร"], "วันพุธ":["วัน","พุธ"],
-    "วันพฤหัสบดี":["วัน","พฤ","หัส","บดี"], "วันศุกร์":["วัน","ศุกร์"], "วันเสาร์":["วัน","เสาร์"], "วันอาทิตย์":["วัน","อา","ทิตย์"],
+    "วันพฤหัสบดี":["วัน","พฤ","หั","ส","บ","ดี"], "วันศุกร์":["วัน","ศุกร์"], "วันเสาร์":["วัน","เสาร์"], "วันอาทิตย์":["วัน","อา","ทิตย์"],
+    // เดือน
     "มกราคม":["ม","ก","รา","คม"], "กุมภาพันธ์":["กุม","ภา","พันธ์"], "มีนาคม":["มี","นา","คม"],
     "เมษายน":["เม","ษา","ยน"], "พฤษภาคม":["พฤษ","ภา","คม"], "มิถุนายน":["มิ","ถุ","นา","ยน"],
     "กรกฎาคม":["กร","กฎา","คม"], "สิงหาคม":["สิง","หา","คม"], "กันยายน":["กัน","ยา","ยน"],
     "ตุลาคม":["ตุ","ลา","คม"], "พฤศจิกายน":["พฤศ","จิ","กา","ยน"], "ธันวาคม":["ธัน","วา","คม"],
-    "จมูก":["จ","มูก"]
+    // อวัยวะบนใบหน้า
+    "จมูก":["จ","มูก"],
+    // หัวข้อ 6: ประโยคสื่อสารประจำวัน (แบ่งพยางค์ตามการออกเสียงจริง)
+    "สวัสดีครับ":["ส","วัส","ดี","ครับ"], "สวัสดีค่ะ":["ส","วัส","ดี","ค่ะ"],
+    "หิวน้ำอยากดื่มน้ำ":["หิว","น้ำ","อยาก","ดื่ม","น้ำ"], "หิวข้าวอยากกินข้าว":["หิว","ข้าว","อยาก","กิน","ข้าว"],
+    "สบายดีไหมครับ":["ส","บาย","ดี","ไหม","ครับ"], "วันนี้สบายดี":["วัน","นี้","ส","บาย","ดี"],
+    "จะนอนหลับแล้ว":["จะ","นอน","หลับ","แล้ว"], "นอนหลับสบาย":["นอน","หลับ","ส","บาย"],
+    "อยากออกไปเที่ยว":["อยาก","ออก","ไป","เที่ยว"],
+    "ขอบคุณมากครับ":["ขอบ","คุณ","มาก","ครับ"], "ขอบคุณมากค่ะ":["ขอบ","คุณ","มาก","ค่ะ"]
   };
   function wordSyllables(word){ return WORD_SYLLABLES[word] || [String(word||'')]; }
   function wordMaxScore(word){ return wordSyllables(word).length; }
@@ -4094,7 +4104,36 @@
     return out;
   }
 
-  // ตารางสรุปของ "หัวข้อที่กำลังเปิด" — แสดงในหน้าห้องฝึก
+  // จำแนกสถานะรายคำของหัวข้อ + สร้างแถวตาราง (ใช้ร่วมกันทั้งในห้องฝึกและสรุปรวม)
+  function topicWordRows(patientId, topicNum){
+    const t = topicsData[topicNum]; const words = (t && t.words) || [];
+    const map = itemLatestMap(patientId, topicNum);
+    const okFull = [], okPart = [], notOk = [], notYet = [];
+    let gotSum = 0, maxSum = 0;
+    const rows = words.map((w, i) => {
+      const wmax = wordMaxScore(w); maxSum += wmax;
+      const info = map[w];
+      let em, st, cls, gotTxt = '–', maxTxt = wmax;
+      if (!info){ em = '⬜'; st = 'ยังไม่ประเมิน'; cls = 'tr-none'; notYet.push(w); }
+      else {
+        gotSum += info.got; gotTxt = info.got; maxTxt = info.max;
+        if (info.got >= info.max){ em = '✅'; st = 'พูดได้'; cls = 'tr-good'; okFull.push(w); }
+        else if (info.got > 0){ em = '⚠️'; st = 'พูดได้บางส่วน'; cls = 'tr-mid'; okPart.push(w); }
+        else { em = '❌'; st = 'ยังพูดไม่ได้'; cls = 'tr-bad'; notOk.push(w); }
+      }
+      return `<tr class="${cls}"><td class="text-center">${i+1}</td><td class="fw-bold">${escapeHtml(w)}</td><td class="text-center">${wmax}</td><td class="text-center fw-bold">${gotTxt}/${maxTxt}</td><td>${em} ${st}</td></tr>`;
+    }).join('');
+    return { rows, okFull, okPart, notOk, notYet, gotSum, maxSum, total: words.length };
+  }
+  function topicWordTableHTML(rows, scroll){
+    return `<div class="table-responsive tsum-tablewrap"${scroll ? ' style="max-height:300px;overflow:auto;"' : ''}>
+      <table class="table table-sm align-middle tsum-table mb-0">
+        <thead><tr><th style="width:38px;">#</th><th>คำ</th><th class="text-center">พยางค์</th><th class="text-center">คะแนน</th><th>สถานะ</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>`;
+  }
+
+  // ตารางสรุปของ "หัวข้อที่กำลังเปิด" — แสดงในหน้าห้องฝึก (รายคำทุกคำ)
   function renderTopicResultSummary(){
     const el = document.getElementById('topic-result-summary');
     if (!el) return;
@@ -4102,26 +4141,12 @@
     el.classList.remove('d-none-h');
     const t = topicsData[currentTopicNum];
     if (t && t.words && t.words.length){
-      const map = itemLatestMap(currentPatient.id, currentTopicNum);
-      let full = 0, part = 0, none = 0, notyet = 0, g = 0, mx = 0;
-      t.words.forEach(w => {
-        mx += wordMaxScore(w);
-        const info = map[w];
-        if (!info){ notyet++; return; }
-        g += info.got;
-        if (info.got >= info.max) full++; else if (info.got > 0) part++; else none++;
-      });
-      const assessed = t.words.length - notyet;
-      const pct = mx ? Math.round(g / mx * 100) : 0;
+      const r = topicWordRows(currentPatient.id, currentTopicNum);
+      const assessed = r.total - r.notYet.length;
+      const pct = r.maxSum ? Math.round(r.gotSum / r.maxSum * 100) : 0;
       el.innerHTML =
-        `<div class="topic-result-head"><i class="fa-solid fa-table-list me-1"></i> ตารางสรุปหัวข้อนี้ · พูดได้ <b>${g}/${mx} พยางค์ (${pct}%)</b></div>
-         <table class="topic-result-table">
-           <tr><td>✅ พูดได้ครบ</td><td>${full} คำ</td></tr>
-           <tr><td>⚠️ พูดได้บางส่วน</td><td>${part} คำ</td></tr>
-           <tr><td>❌ ยังพูดไม่ได้</td><td>${none} คำ</td></tr>
-           <tr><td>⬜ ยังไม่ประเมิน</td><td>${notyet} คำ</td></tr>
-           <tr class="tr-total"><td>ประเมินแล้ว</td><td>${assessed}/${t.words.length} คำ</td></tr>
-         </table>`;
+        `<div class="topic-result-head"><i class="fa-solid fa-table-list me-1"></i> ตารางสรุปหัวข้อนี้ (รายคำ) · พูดได้ครบ <b>${r.okFull.length}/${r.total} คำ</b> · รวม <b>${r.gotSum}/${r.maxSum} พยางค์</b> (${pct}%) · ประเมินแล้ว ${assessed}/${r.total}</div>
+         ${topicWordTableHTML(r.rows, true)}`;
     } else {
       const recs = getHistory().filter(h => h.patientId === currentPatient.id && recTopicNum(h) === currentTopicNum).sort((a,b) => a.ts - b.ts);
       if (!recs.length){ el.innerHTML = '<div class="topic-result-head"><i class="fa-solid fa-circle-info me-1"></i> หัวข้อนี้ยังไม่มีผลประเมิน</div>'; return; }
@@ -4139,36 +4164,17 @@
     let any = false;
     for (let tn = 4; tn <= 6; tn++){
       const t = topicsData[tn]; if (!t || !(t.words && t.words.length)) continue;
-      const map = itemLatestMap(patient.id, tn);
-      const okFull = [], okPart = [], notOk = [], notYet = [];
-      const rows = t.words.map((w, i) => {
-        const wmax = wordMaxScore(w);
-        const info = map[w];
-        let em, st, cls, got = '–', max = wmax;
-        if (!info){ em = '⬜'; st = 'ยังไม่ประเมิน'; cls = 'tr-none'; notYet.push(w); }
-        else {
-          got = info.got; max = info.max;
-          if (info.got >= info.max){ em = '✅'; st = 'พูดได้'; cls = 'tr-good'; okFull.push(w); }
-          else if (info.got > 0){ em = '⚠️'; st = 'พูดได้บางส่วน'; cls = 'tr-mid'; okPart.push(w); }
-          else { em = '❌'; st = 'ยังพูดไม่ได้'; cls = 'tr-bad'; notOk.push(w); }
-        }
-        return `<tr class="${cls}"><td class="text-center">${i+1}</td><td class="fw-bold">${escapeHtml(w)}</td><td class="text-center">${wmax}</td><td class="text-center fw-bold">${got}/${max}</td><td>${em} ${st}</td></tr>`;
-      }).join('');
+      const r = topicWordRows(patient.id, tn);
       const list = (label, arr, cls) => arr.length ? `<div><span class="${cls} fw-bold">${label} (${arr.length}):</span> ${arr.map(escapeHtml).join(', ')}</div>` : '';
       html += `<div class="tsum-topic">
-        <div class="tsum-topic-h">${escapeHtml(t.title)} — พูดได้ <b class="text-success">${okFull.length}/${t.words.length} คำ</b></div>
+        <div class="tsum-topic-h">${escapeHtml(t.title)} — พูดได้ <b class="text-success">${r.okFull.length}/${r.total} คำ</b> · รวม ${r.gotSum}/${r.maxSum} พยางค์</div>
         <div class="tsum-lists">
-          ${list('✅ พูดได้', okFull, 'text-success')}
-          ${list('⚠️ พูดได้บางส่วน', okPart, 'text-warning')}
-          ${list('❌ ยังพูดไม่ได้', notOk, 'text-danger')}
-          ${list('⬜ ยังไม่ประเมิน', notYet, 'text-muted')}
+          ${list('✅ พูดได้', r.okFull, 'text-success')}
+          ${list('⚠️ พูดได้บางส่วน', r.okPart, 'text-warning')}
+          ${list('❌ ยังพูดไม่ได้', r.notOk, 'text-danger')}
+          ${list('⬜ ยังไม่ประเมิน', r.notYet, 'text-muted')}
         </div>
-        <div class="table-responsive">
-          <table class="table table-sm align-middle tsum-table">
-            <thead><tr><th style="width:44px;">#</th><th>คำ</th><th class="text-center">พยางค์</th><th class="text-center">คะแนน</th><th>สถานะ</th></tr></thead>
-            <tbody>${rows}</tbody>
-          </table>
-        </div>
+        ${topicWordTableHTML(r.rows, false)}
       </div>`;
       any = true;
     }
