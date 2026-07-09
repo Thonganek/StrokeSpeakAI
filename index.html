@@ -515,6 +515,13 @@
     }
     .word-badge { gap:8px; }
     .word-badge .wb-emoji { font-size:1.5rem; line-height:1; }
+    /* คะแนนรายคำบนปุ่มเลือกคำ */
+    .wb-score { display:inline-flex; align-items:center; margin-left:6px; padding:1px 8px; border-radius:999px;
+      font-size:.82rem; font-weight:800; line-height:1.5; }
+    .wb-score.wb-none { background:#eef0fb; color:#9aa2bd; }
+    .wb-score.wb-good { background:#e8fbf4; color:#0f766e; border:1px solid #b7ecdb; }
+    .wb-score.wb-mid  { background:#fff6e6; color:#b45309; border:1px solid #f6d590; }
+    .wb-score.wb-bad  { background:#fff0f3; color:#be123c; border:1px solid #f6c6cf; }
 
     /* หมวดหมู่คำที่จะฝึก (หัวข้อ 5) */
     .word-group { width:100%; }
@@ -2299,12 +2306,15 @@
 
         <div class="assessment-panel">
           <h3 class="text-success mb-3"><i class="fa-solid fa-clipboard-check me-2"></i> บันทึกผลการฝึก</h3>
-          <label class="form-label fw-bold fs-5">ผลการประเมิน</label>
-          <div class="score-grid mb-4">
-            <div class="score-card" data-score="ทำไม่ได้ / ปรับปรุง" onclick="selectScore(this,'bad')"><span class="emoji">❌</span><span class="score-pts">0</span> ทำไม่ได้เลย</div>
-            <div class="score-card" data-score="ทำได้บางส่วน" onclick="selectScore(this,'mid')"><span class="emoji">⚠️</span><span class="score-pts">1</span> ทำได้บางส่วน</div>
-            <div class="score-card" data-score="ทำได้ดีเยี่ยม" onclick="selectScore(this,'good')"><span class="emoji">✅</span><span class="score-pts">2</span> ทำได้ครบ</div>
+          <div id="manual-score-section">
+            <label class="form-label fw-bold fs-5">ผลการประเมิน</label>
+            <div class="score-grid mb-4">
+              <div class="score-card" data-score="ทำไม่ได้ / ปรับปรุง" onclick="selectScore(this,'bad')"><span class="emoji">❌</span><span class="score-pts">0</span> ทำไม่ได้เลย</div>
+              <div class="score-card" data-score="ทำได้บางส่วน" onclick="selectScore(this,'mid')"><span class="emoji">⚠️</span><span class="score-pts">1</span> ทำได้บางส่วน</div>
+              <div class="score-card" data-score="ทำได้ดีเยี่ยม" onclick="selectScore(this,'good')"><span class="emoji">✅</span><span class="score-pts">2</span> ทำได้ครบ</div>
+            </div>
           </div>
+          <div id="auto-score-note" class="helper-line mb-3 d-none-h"><i class="fa-solid fa-microphone-lines"></i> หัวข้อนี้ให้คะแนน<b>อัตโนมัติรายคำจากไมค์</b> — คะแนนแต่ละคำแสดงบนปุ่มเลือกคำด้านบน แล้วกดบันทึกได้เลย</div>
           <label for="evalNote" class="form-label fw-bold fs-5">บันทึกเพิ่มเติมจากนักบำบัด</label>
           <textarea class="form-control mb-4" id="evalNote" rows="2" placeholder="ผลการประเมินเสียงพูดจะขึ้นที่นี่โดยอัตโนมัติ (แก้ไขเพิ่มได้)"></textarea>
           <button class="btn btn-success btn-huge" id="btn-save" onclick="saveAssessment()"><i class="fa-solid fa-floppy-disk"></i> บันทึกผลลงระบบ</button>
@@ -3341,6 +3351,12 @@
     updateWordIllus("");
     spokenLog = [];   // เริ่มบันทึกผลการพูดของหัวข้อนี้ใหม่
 
+    // หัวข้อฝึกเสียงพูด (มีไมค์) → ให้คะแนนอัตโนมัติรายคำ จึงตัด "ผลการประเมิน" (ให้คะแนนเอง) ออก
+    const msSec = document.getElementById('manual-score-section');
+    if (msSec) msSec.classList.toggle('d-none-h', !!data.hasAudio);
+    const asNote = document.getElementById('auto-score-note');
+    if (asNote) asNote.classList.toggle('d-none-h', !data.hasAudio);
+
     const videoSection = document.getElementById('video-section');
     const audioSection = document.getElementById('audio-section');
     const vowelMedia   = document.getElementById('vowel-media');
@@ -3381,6 +3397,28 @@
     updateAssessmentProgress();   // อัปเดตแถบคืบหน้า + ✓ บนคำที่ประเมินแล้ว
   }
 
+  // คะแนนของคำ (0/1/2): ใช้ผลรอบนี้จากไมค์ (spokenLog) ก่อน ถ้าไม่มีใช้ล่าสุดจากประวัติ
+  function wordPoints(word){
+    const s = spokenLog.find(x => x.word === word);
+    if (s) return s.level === 'good' ? 2 : s.level === 'mid' ? 1 : 0;
+    if (currentPatient){
+      const recs = getHistory().filter(h => h.patientId === currentPatient.id && recTopicNum(h) === currentTopicNum && recItem(h) === word);
+      if (recs.length){ recs.sort((a,b) => a.ts - b.ts); return histPoints(recs[recs.length-1]); }
+    }
+    return null;
+  }
+  // แสดงคะแนนรายคำบนปุ่มเลือกคำ (แบ่งคะแนนเป็นคำ ๆ)
+  function refreshWordScores(){
+    document.querySelectorAll('#words-grid .word-badge').forEach(b => {
+      const w = b.dataset.word;
+      let sc = b.querySelector('.wb-score');
+      if (!sc){ sc = document.createElement('span'); b.appendChild(sc); }
+      const p = wordPoints(w);
+      sc.className = 'wb-score ' + (p == null ? 'wb-none' : p >= 2 ? 'wb-good' : p >= 1 ? 'wb-mid' : 'wb-bad');
+      sc.textContent = p == null ? '–' : (p >= 2 ? '✅ ' : p >= 1 ? '⚠️ ' : '❌ ') + p;
+    });
+  }
+
   function buildWordGrid(words, onSelectExtra){
     const grid = document.getElementById('words-grid');
     grid.innerHTML = "";
@@ -3395,6 +3433,7 @@
     });
     // เก็บ callback ไว้ใช้ตอนกดปุ่มก่อนหน้า/ถัดไป (สำหรับวิดีโอสระ)
     grid._onSelectExtra = onSelectExtra;
+    refreshWordScores();
   }
 
   // สร้างปุ่มเลือกคำแบบแบ่งเป็นหมวดหมู่ (เช่น หัวข้อ 5: ตัวเลข/วัน/เดือน/อวัยวะ)
@@ -3423,6 +3462,7 @@
       grid.appendChild(section);
     });
     grid._onSelectExtra = onSelectExtra || null;
+    refreshWordScores();
   }
 
   function selectWord(w){
@@ -3647,6 +3687,7 @@
     const entry = { word, heard, percent, level };
     if (idx >= 0) spokenLog[idx] = entry; else spokenLog.push(entry);
     renderSpokenNote();
+    refreshWordScores();   // อัปเดตคะแนนบนปุ่มคำทันทีที่พูด
   }
 
   function renderSpokenNote(){
@@ -3757,6 +3798,7 @@
       document.getElementById('session-count').innerText = sessionCount;
       clearScoreSelection();
       spokenLog = [];   // เริ่มสะสมผลการพูดรอบใหม่หลังบันทึก
+      refreshWordScores();   // ปุ่มคำแสดงคะแนนล่าสุดจากประวัติที่เพิ่งบันทึก
       document.getElementById('evalNote').value = "";
       resetEval();
       document.getElementById('speech-output').innerText = "-";
