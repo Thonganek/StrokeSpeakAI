@@ -2319,7 +2319,7 @@
               <div class="control-stack">
                 <button class="btn btn-primary btn-huge" onclick="speakCurrentWord()"><i class="fa-solid fa-volume-high"></i> ฟังเสียง</button>
                 <button id="mic-btn" class="btn btn-danger btn-huge" onclick="startListening()"><i class="fa-solid fa-microphone"></i> พูดตาม</button>
-                <button class="btn btn-outline-secondary" onclick="resetCurrentWord()" title="ล้างคะแนนคำนี้ (เผื่อระบบฟังผิด) แล้วพูดใหม่"><i class="fa-solid fa-rotate-left me-1"></i> รีเซ็ตคะแนนคำนี้</button>
+                <button id="btn-reset-word" class="btn btn-outline-secondary" onclick="resetCurrentWord()" title="ล้างคะแนนคำนี้ (เผื่อระบบฟังผิด) แล้วพูดใหม่"><i class="fa-solid fa-rotate-left me-1"></i> รีเซ็ตคะแนนคำนี้</button>
                 <div class="speed-control">
                   <div class="text-muted fw-bold mb-2">ความเร็วเสียงต้นแบบ</div>
                   <div class="btn-group" role="group">
@@ -2342,7 +2342,7 @@
               </div>
             </div>
 
-            <div class="recognition-grid">
+            <div id="recognition-grid" class="recognition-grid">
               <div class="heard-card text-center">
                 <div>
                   <small class="text-muted d-block">เสียงที่ระบบได้ยิน</small>
@@ -2354,7 +2354,7 @@
 
             <hr class="my-4">
             <div class="word-tools">
-              <h5><i class="fa-solid fa-list-check text-primary me-2"></i> เลือกคำที่จะฝึก</h5>
+              <h5 id="words-title"><i class="fa-solid fa-list-check text-primary me-2"></i> เลือกคำที่จะฝึก</h5>
               <div class="d-flex gap-2">
                 <button class="btn btn-outline-primary btn-xl" onclick="stepWord(-1)"><i class="fa-solid fa-chevron-left"></i> ก่อนหน้า</button>
                 <button class="btn btn-outline-primary btn-xl" onclick="stepWord(1)">ถัดไป <i class="fa-solid fa-chevron-right"></i></button>
@@ -2376,6 +2376,12 @@
             </div>
           </div>
           <div id="auto-score-note" class="helper-line mb-3 d-none-h"><i class="fa-solid fa-microphone-lines"></i> หัวข้อนี้ให้คะแนน<b>อัตโนมัติรายคำจากไมค์</b> — คะแนนแต่ละคำแสดงบนปุ่มเลือกคำด้านบน แล้วกดบันทึกได้เลย</div>
+          <div id="vowel-score-criteria" class="helper-line mb-3 d-none-h" style="flex-direction:column; align-items:stretch; gap:8px;">
+            <div style="display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-list-ol"></i> <b>เกณฑ์การให้คะแนนการออกเสียงสระ</b></div>
+            <div style="display:flex; align-items:center; gap:10px;"><span class="score-pts">0</span> พูดไม่ได้เลย</div>
+            <div style="display:flex; align-items:center; gap:10px;"><span class="score-pts">1</span> พูดออกเสียงได้แค่บางส่วน</div>
+            <div style="display:flex; align-items:center; gap:10px;"><span class="score-pts">2</span> พูดออกเสียงได้ถูกต้องครบถ้วน</div>
+          </div>
           <label for="evalNote" class="form-label fw-bold fs-5">บันทึกเพิ่มเติมจากนักบำบัด</label>
           <textarea class="form-control mb-4" id="evalNote" rows="2" placeholder="ผลการประเมินเสียงพูดจะขึ้นที่นี่โดยอัตโนมัติ (แก้ไขเพิ่มได้)"></textarea>
           <button class="btn btn-success btn-huge" id="btn-save" onclick="saveAssessment()"><i class="fa-solid fa-floppy-disk"></i> บันทึกผลลงระบบ</button>
@@ -2383,6 +2389,33 @@
       </div>
     </section>
   </main>
+  <!-- ==================== Modal: ประเมินการออกเสียงสระ (หัวข้อ 4) ==================== -->
+  <div class="modal fade" id="vowelScoreModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content" style="border-radius:18px; overflow:hidden;">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title"><i class="fa-solid fa-comment-dots me-2"></i> ประเมินการออกเสียงสระ</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="ปิด"></button>
+        </div>
+        <div class="modal-body text-center">
+          <div id="vsm-vowel" style="font-size:5rem; font-weight:800; line-height:1; margin:6px 0 16px; color:var(--teal);">-</div>
+          <button class="btn btn-primary btn-lg mb-3" type="button" onclick="playVowelModelSound()"><i class="fa-solid fa-volume-high me-2"></i> ฟังเสียงต้นแบบ</button>
+          <div class="row justify-content-center mb-4">
+            <div class="col-lg-9">
+              <div class="ratio ratio-16x9 rounded-3 overflow-hidden bg-light"><iframe id="vsm-video" src="" frameborder="0" allow="encrypted-media" allowfullscreen></iframe></div>
+              <small class="text-muted d-block mt-2"><i class="fa-solid fa-film me-1"></i> วิดีโอสาธิตรูปปากการออกเสียง</small>
+            </div>
+          </div>
+          <div class="fw-bold fs-5 mb-3"><i class="fa-solid fa-hand-pointer me-2 text-primary"></i> แตะเพื่อให้คะแนนการออกเสียง</div>
+          <div class="score-grid">
+            <div class="score-card" id="vsm-card-0" onclick="setVowelScore(0)"><span class="emoji">❌</span><span class="score-pts">0</span> พูดไม่ได้เลย</div>
+            <div class="score-card" id="vsm-card-1" onclick="setVowelScore(1)"><span class="emoji">⚠️</span><span class="score-pts">1</span> พูดออกเสียงได้แค่บางส่วน</div>
+            <div class="score-card" id="vsm-card-2" onclick="setVowelScore(2)"><span class="emoji">✅</span><span class="score-pts">2</span> พูดออกเสียงได้ถูกต้องครบถ้วน</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
   <!-- ==================== Modal: เพิ่มผู้ป่วย ==================== -->
   <div class="modal fade" id="addPatientModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
@@ -3430,8 +3463,20 @@
     // หัวข้อฝึกเสียงพูด (มีไมค์) → ให้คะแนนอัตโนมัติรายคำ จึงตัด "ผลการประเมิน" (ให้คะแนนเอง) ออก
     const msSec = document.getElementById('manual-score-section');
     if (msSec) msSec.classList.toggle('d-none-h', !!data.hasAudio);
+    const isVowelTopic = (num === 4);   // หัวข้อ 4 = นักบำบัดกดสระ → popup ให้คะแนน 0/1/2 เอง (ไม่ใช้ไมค์)
     const asNote = document.getElementById('auto-score-note');
-    if (asNote) asNote.classList.toggle('d-none-h', !data.hasAudio);
+    if (asNote) asNote.classList.toggle('d-none-h', !data.hasAudio || isVowelTopic);
+    const vsc = document.getElementById('vowel-score-criteria');   // เกณฑ์ 0/1/2 แสดงเฉพาะหัวข้อ 4 (ออกเสียงสระ)
+    if (vsc) vsc.classList.toggle('d-none-h', !isVowelTopic);
+    // หัวข้อ 4 ให้คะแนนผ่าน popup จึงซ่อนส่วนไมค์/ผลการฟัง (กันสับสนและกันคะแนนชนกัน)
+    ['mic-btn','btn-reset-word','recognition-grid'].forEach(id => {
+      const elx = document.getElementById(id);
+      if (elx) elx.classList.toggle('d-none-h', isVowelTopic);
+    });
+    const wtTitle = document.getElementById('words-title');
+    if (wtTitle) wtTitle.innerHTML = isVowelTopic
+      ? '<i class="fa-solid fa-hand-pointer text-primary me-2"></i> แตะสระเพื่อฟังเสียง ดูรูปปาก และให้คะแนน'
+      : '<i class="fa-solid fa-list-check text-primary me-2"></i> เลือกคำที่จะฝึก';
     renderTopicResultSummary();   // ตารางสรุปผลของหัวข้อนี้
     renderSpeechCheck();          // ตารางตรวจความเที่ยงการพูด (รายคำ)
 
@@ -3445,12 +3490,11 @@
       audioSection.classList.remove('d-none-h');
 
       if (num === 4){
-        vowelMedia.classList.remove('d-none-h');
+        // สระ: วิดีโอรูปปาก + ปุ่มให้คะแนนอยู่ใน popup → ซ่อนวิดีโอบนหน้าหลัก แล้วให้ "แตะสระ" เปิด popup ประเมิน
+        vowelMedia.classList.add('d-none-h');
+        document.getElementById('vowel-video').src = "";
         currentWordList = data.wordsDetail.map(x => x.w);
-        buildWordGrid(data.wordsDetail.map(x => x.w), (w) => {
-          const item = data.wordsDetail.find(x => x.w === w);
-          document.getElementById('vowel-video').src = item ? item.embedv : "";
-        });
+        buildWordGrid(currentWordList, null, (w) => openVowelScoreModal(w));
       } else {
         vowelMedia.classList.add('d-none-h');
         document.getElementById('vowel-video').src = "";
@@ -3488,14 +3532,15 @@
   }
   // แสดงคะแนนพยางค์รายคำบนปุ่มเลือกคำ (โชว์จำนวนพยางค์ที่ต้องพูดไว้เลย) + ปุ่มรีเซ็ตรายคำ
   function refreshWordScores(){
+    const unit = itemUnit(currentTopicNum);   // หัวข้อ 4 = "คะแนน", อื่นๆ = "พยางค์"
     document.querySelectorAll('#words-grid .word-badge').forEach(b => {
       const w = b.dataset.word;
       let sc = b.querySelector('.wb-score');
       if (!sc){ sc = document.createElement('span'); b.appendChild(sc); }
       const info = wordScoreInfo(w);
       const max = info.max, got = info.got;
-      if (got == null){ sc.className = 'wb-score wb-none'; sc.textContent = '–/' + max + ' พยางค์'; }
-      else { sc.className = 'wb-score ' + (got >= max ? 'wb-good' : got > 0 ? 'wb-mid' : 'wb-bad'); sc.textContent = got + '/' + max + ' พยางค์'; }
+      if (got == null){ sc.className = 'wb-score wb-none'; sc.textContent = '–/' + max + ' ' + unit; }
+      else { sc.className = 'wb-score ' + (got >= max ? 'wb-good' : got > 0 ? 'wb-mid' : 'wb-bad'); sc.textContent = got + '/' + max + ' ' + unit; }
       // ปุ่มรีเซ็ต ↺ เฉพาะคำที่เพิ่งประเมินในรอบนี้ (เผื่อระบบฟังผิด)
       let rb = b.querySelector('.wb-reset');
       if (spokenLog.some(x => x.word === w)){
@@ -3533,6 +3578,7 @@
   function renderSpeechCheck(){
     const el = document.getElementById('speech-check');
     if (!el) return;
+    if (Number(currentTopicNum) === 4){ el.classList.add('d-none-h'); el.innerHTML = ''; return; }  // หัวข้อ 4 ให้คะแนนผ่าน popup (ไม่ใช้ตารางตรวจพยางค์)
     const t = topicsData[currentTopicNum];
     if (!t || !(t.words && t.words.length)){ el.classList.add('d-none-h'); el.innerHTML = ''; return; }
     el.classList.remove('d-none-h');
@@ -3597,7 +3643,7 @@
     refreshWordScores();
   }
 
-  function buildWordGrid(words, onSelectExtra){
+  function buildWordGrid(words, onSelectExtra, onBadgeClick){
     const grid = document.getElementById('words-grid');
     grid.innerHTML = "";
     words.forEach(w => {
@@ -3606,7 +3652,8 @@
       const emoji = WORD_IMAGES[w];
       b.innerHTML = (emoji ? `<span class="wb-emoji">${emoji}</span>` : "") + `<span>${w}</span>`;
       b.dataset.word = w;
-      b.onclick = () => { selectWord(w); if (onSelectExtra) onSelectExtra(w); };
+      // onBadgeClick = เฉพาะตอน "ผู้ใช้แตะปุ่มจริง" (ไม่ทำงานตอนเลือกอัตโนมัติ) → ใช้เปิด popup ประเมินสระ
+      b.onclick = () => { selectWord(w); if (onSelectExtra) onSelectExtra(w); if (onBadgeClick) onBadgeClick(w); };
       grid.appendChild(b);
     });
     // เก็บ callback ไว้ใช้ตอนกดปุ่มก่อนหน้า/ถัดไป (สำหรับวิดีโอสระ)
@@ -3670,9 +3717,53 @@
     selectWord(w);
     const grid = document.getElementById('words-grid');
     if (grid._onSelectExtra) grid._onSelectExtra(w);
+    if (Number(currentTopicNum) === 4) openVowelScoreModal(w);   // หัวข้อ 4: เลื่อนสระ → เปิด popup ประเมินต่อเนื่อง
     // เลื่อนปุ่มที่เลือกให้เห็น
     const el = document.querySelector(`.word-badge[data-word="${CSS.escape(w)}"]`);
     if (el) el.scrollIntoView({ behavior:'smooth', block:'nearest', inline:'center' });
+  }
+
+  /* ============================================================================
+     Popup ประเมินการออกเสียงสระ (หัวข้อ 4) — แตะสระ → ให้คะแนน 0/1/2 เอง
+     ============================================================================ */
+  let vowelModalWord = "";
+  let _vowelScoreModal = null;
+
+  function openVowelScoreModal(word){
+    vowelModalWord = word;
+    const el = document.getElementById('vsm-vowel'); if (el) el.innerText = word;
+    // โหลดวิดีโอสาธิตรูปปากของสระตัวนี้เข้า popup
+    const item = (topicsData[4].wordsDetail || []).find(x => x.w === word);
+    const vid = document.getElementById('vsm-video'); if (vid) vid.src = item ? item.embedv : "";
+    // ไฮไลต์คะแนนเดิมของสระนี้ (ถ้าเคยให้ไว้ในรอบนี้/ประวัติ)
+    const prev = wordScoreInfo(word).got;   // null = ยังไม่ประเมิน
+    const cls = ['sel-bad','sel-mid','sel-good'];
+    [0,1,2].forEach(v => {
+      const c = document.getElementById('vsm-card-' + v);
+      if (c){ c.classList.remove('sel-bad','sel-mid','sel-good'); if (prev === v) c.classList.add(cls[v]); }
+    });
+    if (!_vowelScoreModal){
+      _vowelScoreModal = new bootstrap.Modal('#vowelScoreModal');
+      // หยุดวิดีโอเมื่อปิด popup
+      document.getElementById('vowelScoreModal').addEventListener('hidden.bs.modal', () => {
+        const v = document.getElementById('vsm-video'); if (v) v.src = "";
+      });
+    }
+    _vowelScoreModal.show();
+  }
+
+  function playVowelModelSound(){ if (vowelModalWord) speak(vowelModalWord, ttsRate); }
+
+  // นักบำบัดให้คะแนนสระ 0/1/2 → เก็บลง spokenLog (เต็ม 2 คะแนน) แล้วปิด popup
+  function setVowelScore(v){
+    const word = vowelModalWord;
+    if (!word) return;
+    const entry = { word, heard:'(ประเมินโดยนักบำบัด)', got:v, max:2, flags:[v >= 1, v >= 2], manual:true };
+    const idx = spokenLog.findIndex(x => x.word === word);
+    if (idx >= 0) spokenLog[idx] = entry; else spokenLog.push(entry);
+    renderSpokenNote();
+    refreshWordScores();   // อัปเดตคะแนนบนปุ่มสระ + ตารางสรุปทันที
+    if (_vowelScoreModal) _vowelScoreModal.hide();
   }
 
   /* ============================================================================
@@ -3826,7 +3917,11 @@
     "ขอบคุณมากครับ":["ขอบ","คุณ","มาก","ครับ"], "ขอบคุณมากค่ะ":["ขอบ","คุณ","มาก","ค่ะ"]
   };
   function wordSyllables(word){ return WORD_SYLLABLES[word] || [String(word||'')]; }
-  function wordMaxScore(word){ return wordSyllables(word).length; }
+  // สระในหัวข้อ 4 ให้คะแนนแบบ 0/1/2 (เต็ม 2 คะแนน) ไม่ใช่รายพยางค์
+  const VOWEL_WORDS = new Set(((topicsData[4] && topicsData[4].wordsDetail) || []).map(x => x.w));
+  function isVowelWord(word){ return VOWEL_WORDS.has(word); }
+  function itemUnit(topicNum){ return Number(topicNum) === 4 ? 'คะแนน' : 'พยางค์'; }
+  function wordMaxScore(word){ return isVowelWord(word) ? 2 : wordSyllables(word).length; }
   // จำนวนพยางค์เต็มของ 1 เรคคอร์ด (จาก maxScore หรือแกะจากข้อความ "x/N พยางค์")
   function recMax(h){
     if (h && typeof h.maxScore === 'number' && h.maxScore > 0) return h.maxScore;
@@ -3949,6 +4044,13 @@
     if (!spokenLog.length){ noteEl.value = ""; return; }
     const totGot = spokenLog.reduce((s,x) => s + x.got, 0);
     const totMax = spokenLog.reduce((s,x) => s + x.max, 0);
+    // หัวข้อ 4: สรุปแบบเกณฑ์ออกเสียงสระ (0/1/2)
+    if (Number(currentTopicNum) === 4){
+      const rubric = g => g >= 2 ? '✅ พูดออกเสียงได้ถูกต้องครบถ้วน' : g === 1 ? '⚠️ พูดออกเสียงได้แค่บางส่วน' : '❌ พูดไม่ได้เลย';
+      const lines = spokenLog.map(x => `"${x.word}" → ${x.got}/${x.max} คะแนน (${rubric(x.got)})`);
+      noteEl.value = `[สรุปการออกเสียงสระ] ได้รวม ${totGot}/${totMax} คะแนน\n` + lines.join("\n");
+      return;
+    }
     const icon = x => x.got >= x.max ? '✅' : x.got > 0 ? '⚠️' : '❌';
     const lines = spokenLog.map(x => `${icon(x)} "${x.word}" → ${x.got}/${x.max} พยางค์`);
     noteEl.value = `[สรุปการฝึกพูด] พูดได้รวม ${totGot}/${totMax} พยางค์ (พยางค์ละ 1 คะแนน)\n` + lines.join("\n");
@@ -4007,13 +4109,18 @@
     // สร้างเรคคอร์ด: หัวข้อ 4–6 = 1 เรคคอร์ดต่อ 1 คำ (คะแนนจากไมค์) · หัวข้อ 1–3 = 1 เรคคอร์ดรวม
     let records = [];
     if (itemized){
-      if (!spokenLog.length){ alert("ยังไม่มีคำที่ให้คะแนน — ให้ผู้ป่วยพูดตามให้ระบบฟังก่อนบันทึกครับ"); return; }
+      const emptyMsg = (Number(currentTopicNum) === 4)
+        ? "ยังไม่มีสระที่ให้คะแนน — แตะสระแล้วกดให้คะแนนใน popup ก่อนบันทึกครับ"
+        : "ยังไม่มีคำที่ให้คะแนน — ให้ผู้ป่วยพูดตามให้ระบบฟังก่อนบันทึกครับ";
+      if (!spokenLog.length){ alert(emptyMsg); return; }
+      const unit = itemUnit(currentTopicNum);
+      const itemLabel = (Number(currentTopicNum) === 4) ? 'สระ' : 'คำที่ฝึก';
       records = spokenLog.map((x, i) => {
         return Object.assign(base(), {
           ts: now.getTime() + i,
           topicNum: currentTopicNum, item: x.word,
-          topic: currentTopicName + ` (คำที่ฝึก: ${x.word})`,
-          score: `${x.got}/${x.max} พยางค์`, scoreValue: x.got, maxScore: x.max
+          topic: currentTopicName + ` (${itemLabel}: ${x.word})`,
+          score: `${x.got}/${x.max} ${unit}`, scoreValue: x.got, maxScore: x.max
         });
       });
     } else {
@@ -4253,10 +4360,11 @@
     }).join('');
     return { rows, okFull, okPart, notOk, notYet, gotSum, maxSum, total: words.length };
   }
-  function topicWordTableHTML(rows, scroll){
+  function topicWordTableHTML(rows, scroll, unit){
+    const maxCol = (unit === 'คะแนน') ? 'เต็ม' : 'พยางค์';
     return `<div class="table-responsive tsum-tablewrap"${scroll ? ' style="max-height:300px;overflow:auto;"' : ''}>
       <table class="table table-sm align-middle tsum-table mb-0">
-        <thead><tr><th style="width:38px;">#</th><th>คำ</th><th class="text-center">พยางค์</th><th class="text-center">คะแนน</th><th>สถานะ</th></tr></thead>
+        <thead><tr><th style="width:38px;">#</th><th>คำ</th><th class="text-center">${maxCol}</th><th class="text-center">คะแนน</th><th>สถานะ</th></tr></thead>
         <tbody>${rows}</tbody>
       </table></div>`;
   }
@@ -4272,9 +4380,10 @@
       const r = topicWordRows(currentPatient.id, currentTopicNum);
       const assessed = r.total - r.notYet.length;
       const pct = r.maxSum ? Math.round(r.gotSum / r.maxSum * 100) : 0;
+      const unit = itemUnit(currentTopicNum);
       el.innerHTML =
-        `<div class="topic-result-head"><i class="fa-solid fa-table-list me-1"></i> ตารางสรุปหัวข้อนี้ (รายคำ) · พูดได้ครบ <b>${r.okFull.length}/${r.total} คำ</b> · รวม <b>${r.gotSum}/${r.maxSum} พยางค์</b> (${pct}%) · ประเมินแล้ว ${assessed}/${r.total}</div>
-         ${topicWordTableHTML(r.rows, true)}`;
+        `<div class="topic-result-head"><i class="fa-solid fa-table-list me-1"></i> ตารางสรุปหัวข้อนี้ (รายคำ) · ทำได้ครบ <b>${r.okFull.length}/${r.total} รายการ</b> · รวม <b>${r.gotSum}/${r.maxSum} ${unit}</b> (${pct}%) · ประเมินแล้ว ${assessed}/${r.total}</div>
+         ${topicWordTableHTML(r.rows, true, unit)}`;
     } else {
       const recs = getHistory().filter(h => h.patientId === currentPatient.id && recTopicNum(h) === currentTopicNum).sort((a,b) => a.ts - b.ts);
       if (!recs.length){ el.innerHTML = '<div class="topic-result-head"><i class="fa-solid fa-circle-info me-1"></i> หัวข้อนี้ยังไม่มีผลประเมิน</div>'; return; }
@@ -4293,16 +4402,17 @@
     for (let tn = 4; tn <= 6; tn++){
       const t = topicsData[tn]; if (!t || !(t.words && t.words.length)) continue;
       const r = topicWordRows(patient.id, tn);
+      const unit = itemUnit(tn);
       const list = (label, arr, cls) => arr.length ? `<div><span class="${cls} fw-bold">${label} (${arr.length}):</span> ${arr.map(escapeHtml).join(', ')}</div>` : '';
       html += `<div class="tsum-topic">
-        <div class="tsum-topic-h">${escapeHtml(t.title)} — พูดได้ <b class="text-success">${r.okFull.length}/${r.total} คำ</b> · รวม ${r.gotSum}/${r.maxSum} พยางค์</div>
+        <div class="tsum-topic-h">${escapeHtml(t.title)} — ทำได้ครบ <b class="text-success">${r.okFull.length}/${r.total} รายการ</b> · รวม ${r.gotSum}/${r.maxSum} ${unit}</div>
         <div class="tsum-lists">
           ${list('✅ พูดได้', r.okFull, 'text-success')}
           ${list('⚠️ พูดได้บางส่วน', r.okPart, 'text-warning')}
           ${list('❌ ยังพูดไม่ได้', r.notOk, 'text-danger')}
           ${list('⬜ ยังไม่ประเมิน', r.notYet, 'text-muted')}
         </div>
-        ${topicWordTableHTML(r.rows, false)}
+        ${topicWordTableHTML(r.rows, false, unit)}
       </div>`;
       any = true;
     }
