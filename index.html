@@ -1390,7 +1390,9 @@
     }
     .word-hero {
       font-size:5.2rem;
-      padding:0;
+      /* เผื่อพื้นที่บน-ล่างให้เห็นสระบน/สระล่าง/วรรณยุกต์ครบ (กันตัวอักษรถูกตัดตอนใช้ gradient clip) */
+      padding:0.18em 0.06em 0.34em;
+      line-height:1.5;
     }
     .control-stack {
       display:grid;
@@ -2398,7 +2400,7 @@
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="ปิด"></button>
         </div>
         <div class="modal-body text-center">
-          <div id="vsm-vowel" style="font-size:3.4rem; font-weight:800; line-height:1.1; margin:6px 0 14px; color:var(--teal);">-</div>
+          <div id="vsm-vowel" style="font-size:3.4rem; font-weight:800; line-height:1.4; padding:0.08em 0 0.2em; margin:6px 0 10px; color:var(--teal);">-</div>
           <div class="d-flex gap-2 justify-content-center flex-wrap mb-3">
             <button class="btn btn-primary btn-lg" type="button" onclick="playVowelModelSound()"><i class="fa-solid fa-volume-high me-2"></i> ฟังเสียงต้นแบบ</button>
             <button id="vsm-mic" class="btn btn-danger btn-lg" type="button" onclick="vsmListen()"><i class="fa-solid fa-microphone me-2"></i> พูดตาม (อัดเสียง)</button>
@@ -3686,6 +3688,8 @@
   let pendingVsmScore = null;   // null = ยังไม่เลือก
   let pendingVsmManual = false; // true = นักบำบัดกดเอง, false = จากไมค์
   let pendingVsmHeard = "";     // ข้อความที่ไมค์ได้ยิน (ถ้ามี)
+  let vsmMicOn = false;         // ไมค์ใน popup กำลังฟังอยู่ไหม (โหมดฟังต่อเนื่อง)
+  let vsmCandidates = [];       // เก็บทุกเสียงที่ไมค์ได้ยินในรอบนี้ เพื่อประเมินเลือกผลดีที่สุด
 
   // แปลงผลวิเคราะห์รายพยางค์จากไมค์ → คะแนน 0/1/2 (0=ไม่ได้เลย, บางส่วน=1, ครบ=2)
   function mapTo012(got, maxN){ return (got|0) <= 0 ? 0 : ((got|0) >= (maxN|0) ? 2 : 1); }
@@ -3722,18 +3726,17 @@
     if (detail && detail.embedv){ if (row) row.classList.remove('d-none-h'); if (vid) vid.src = detail.embedv; }
     else { if (row) row.classList.add('d-none-h'); if (vid) vid.src = ""; }
     // รีเซ็ตผลไมค์เดิม + ตั้งคะแนนที่เลือกไว้ = คะแนนเดิมของคำนี้ (ถ้าเคยให้ไว้ในรอบนี้/ประวัติ)
-    setVsmHeard('-'); vsmResetMic();
+    vsmMicOn = false; vsmCandidates = []; setVsmHeard('-'); setVsmMicListening(false);
     const rb = document.getElementById('vsm-result'); if (rb){ rb.classList.add('d-none-h'); rb.innerHTML = ''; }
     const prev = wordScoreInfo(word).got;   // null = ยังไม่ประเมิน
     pendingVsmScore = prev; pendingVsmManual = true; pendingVsmHeard = "";
     highlightVsmCard(prev);
     if (!_vowelScoreModal){
       _vowelScoreModal = new bootstrap.Modal('#vowelScoreModal');
-      // ปิด popup → หยุดวิดีโอ + หยุดไมค์
+      // ปิด popup → หยุดวิดีโอ + หยุดไมค์ (กันฟังต่ออัตโนมัติ)
       document.getElementById('vowelScoreModal').addEventListener('hidden.bs.modal', () => {
         const v = document.getElementById('vsm-video'); if (v) v.src = "";
-        try { if (recognition) recognition.abort(); } catch(e){}
-        vsmResetMic();
+        vsmStopListen();
       });
     }
     _vowelScoreModal.show();
@@ -3741,28 +3744,54 @@
 
   function playVowelModelSound(){ if (vowelModalWord) speak(vowelModalWord, ttsRate); }
 
-  // ไมค์ใน popup: อัดเสียง → วิเคราะห์ → ให้คะแนน 0/1/2 อัตโนมัติ
+  function setVsmMicListening(on){
+    const b = document.getElementById('vsm-mic'); if (!b) return;
+    if (on){ b.classList.add('listening'); b.innerHTML = '<i class="fa-solid fa-ear-listen me-2"></i> กำลังฟัง... (กดเพื่อหยุด)'; }
+    else { b.classList.remove('listening'); b.innerHTML = '<i class="fa-solid fa-microphone me-2"></i> พูดตาม (อัดเสียง)'; }
+  }
+  function vsmStopListen(){
+    vsmMicOn = false;
+    try { if (recognition) recognition.stop(); } catch(e){}
+    setVsmMicListening(false);
+  }
+
+  // ไมค์ใน popup: ฟังต่อเนื่อง + รับผลระหว่างพูด + เก็บทุกตัวเลือก → ไวต่อเสียงมากที่สุด · กดซ้ำเพื่อหยุด
   function vsmListen(){
     const word = vowelModalWord;
     if (!word) return;
+    if (vsmMicOn){ vsmStopListen(); return; }   // toggle: กำลังฟังอยู่ → กดเพื่อหยุด
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR){ alert("บราวเซอร์นี้ไม่รองรับระบบเสียง แนะนำให้ใช้ Google Chrome ครับ"); return; }
     window.speechSynthesis.cancel();
+    vsmCandidates = [];
     recognition = new SR();
-    recognition.lang = 'th-TH'; recognition.interimResults = false; recognition.maxAlternatives = 8;
-    const btn = document.getElementById('vsm-mic');
-    if (btn){ btn.classList.add('listening'); btn.innerHTML = '<i class="fa-solid fa-ear-listen me-2"></i> กำลังฟัง... พูดได้เลย'; }
-    setVsmHeard('🎧 ...');
+    recognition.lang = 'th-TH';
+    recognition.continuous = true;       // ฟังต่อเนื่อง ไม่ตัดจบเร็ว
+    recognition.interimResults = true;   // รับผลระหว่างพูด (ไวสุด)
+    recognition.maxAlternatives = 12;    // เก็บตัวเลือกให้มากที่สุด เพิ่มโอกาสจับคำได้
+    vsmMicOn = true;
+    setVsmMicListening(true);
+    setVsmHeard('🎧 กำลังฟัง...');
     recognition.onresult = (event) => {
-      const alts = [];
-      for (let i = 0; i < event.results[0].length; i++) alts.push(event.results[0][i].transcript.trim());
-      const spoken = alts[0] || "";
-      setVsmHeard(spoken || '-');
-      vsmEvaluate(word, spoken, alts);
+      for (let i = event.resultIndex; i < event.results.length; i++){
+        const r = event.results[i];
+        for (let j = 0; j < r.length; j++){ const t = (r[j].transcript || '').trim(); if (t) vsmCandidates.push(t); }
+      }
+      if (vsmCandidates.length > 80) vsmCandidates = vsmCandidates.slice(-80);   // กันสะสมมากเกินไป
+      const last = vsmCandidates[vsmCandidates.length - 1] || '';
+      setVsmHeard(last || '-');
+      vsmEvaluate(word, last, vsmCandidates);   // ประเมินจากทุกตัวเลือกที่สะสม เลือกผลดีที่สุด
     };
-    recognition.onerror = (e) => { vsmResetMic(); alert(micErrorMessage(e)); };
-    recognition.onend = () => vsmResetMic();
-    try { recognition.start(); } catch(err){ vsmResetMic(); }
+    recognition.onerror = (e) => {
+      if (e.error === 'no-speech' || e.error === 'aborted') return;   // เงียบชั่วคราว/หยุดเอง → ไม่เด้ง alert
+      vsmStopListen(); alert(micErrorMessage(e));
+    };
+    recognition.onend = () => {
+      // บางเบราว์เซอร์หยุดเองเมื่อเงียบ → ต่ออัตโนมัติถ้ายังเปิดไมค์อยู่ (ฟังต่อเนื่องจริง)
+      if (vsmMicOn){ try { recognition.start(); } catch(e){ vsmMicOn = false; setVsmMicListening(false); } }
+      else setVsmMicListening(false);
+    };
+    try { recognition.start(); } catch(err){ vsmMicOn = false; setVsmMicListening(false); }
   }
 
   function vsmEvaluate(word, spoken, alts){
@@ -3772,11 +3801,12 @@
     const box = document.getElementById('vsm-result');
     if (box){
       box.classList.remove('d-none-h');
-      if (score >= 2){ box.className = 'result-box result-good mb-3'; box.innerHTML = '✅ พูดออกเสียงได้ถูกต้องครบถ้วน — ได้ 2 คะแนน · กด <b>บันทึกคะแนน</b> เพื่อยืนยัน'; speak("เก่งมากครับ", 1); }
-      else if (score === 1){ box.className = 'result-box result-mid mb-3'; box.innerHTML = '⚠️ พูดออกเสียงได้แค่บางส่วน — ได้ 1 คะแนน · พูดใหม่ได้ หรือกด <b>บันทึกคะแนน</b>'; speak("เกือบได้แล้วครับ", 1); }
-      else { box.className = 'result-box result-bad mb-3'; box.innerHTML = `❌ พูดไม่ได้เลย — ระบบได้ยินเป็น "${escapeHtml(spoken)}" (0 คะแนน) · ลองใหม่ได้`; speak("ลองอีกครั้งนะครับ", 1); }
+      if (score >= 2){ box.className = 'result-box result-good mb-3'; box.innerHTML = '✅ พูดออกเสียงได้ถูกต้องครบถ้วน — ได้ 2 คะแนน · กด <b>บันทึกคะแนน</b> เพื่อยืนยัน'; }
+      else if (score === 1){ box.className = 'result-box result-mid mb-3'; box.innerHTML = '⚠️ พูดออกเสียงได้แค่บางส่วน — ได้ 1 คะแนน · พูดต่อได้ หรือกด <b>บันทึกคะแนน</b>'; }
+      else { box.className = 'result-box result-bad mb-3'; box.innerHTML = `❌ ยังฟังไม่ชัด — ได้ยิน "${escapeHtml(spoken)}" (0 คะแนน) · พูดต่อได้เลย`; }
     }
-    // ตั้งเป็น "คะแนนที่เลือกไว้" (ยังไม่เก็บ) — รอกดบันทึกยืนยัน
+    // ระหว่างฟังต่อเนื่อง: อัปเดต "คะแนนที่เลือกไว้" ตามผลดีที่สุด (ยังไม่เก็บจนกดบันทึกยืนยัน)
+    // ไม่เล่นเสียงตอบระหว่างฟัง เพื่อกันไมค์ได้ยินเสียงระบบเอง (feedback loop)
     pendingVsmScore = score; pendingVsmManual = false; pendingVsmHeard = spoken;
     highlightVsmCard(score);
   }
@@ -3784,8 +3814,7 @@
   // แตะการ์ดให้คะแนนเอง → เลือกไว้ (ไฮไลต์) ยังไม่เก็บจนกว่าจะกดบันทึกยืนยัน
   function vsmSelectScore(v){
     if (!vowelModalWord) return;
-    try { if (recognition) recognition.abort(); } catch(e){}
-    vsmResetMic();
+    vsmStopListen();
     pendingVsmScore = v; pendingVsmManual = true; pendingVsmHeard = "";
     highlightVsmCard(v);
   }
@@ -3795,7 +3824,7 @@
     const word = vowelModalWord;
     if (!word) return;
     if (pendingVsmScore == null){ alert("กรุณาอัดเสียงหรือแตะเลือกคะแนนก่อนบันทึกครับ"); return; }
-    try { if (recognition) recognition.abort(); } catch(e){}
+    vsmStopListen();
     storeWordScore(word, pendingVsmScore, pendingVsmManual, pendingVsmHeard || undefined);
     if (_vowelScoreModal) _vowelScoreModal.hide();
   }
@@ -3804,8 +3833,8 @@
   function vsmResetScore(){
     const word = vowelModalWord;
     if (!word) return;
-    try { if (recognition) recognition.abort(); } catch(e){}
-    vsmResetMic();
+    vsmStopListen();
+    vsmCandidates = [];
     resetWordScore(word);   // ล้างออกจาก spokenLog + อัปเดตปุ่มคำ
     pendingVsmScore = null; pendingVsmManual = false; pendingVsmHeard = "";
     highlightVsmCard(null);
@@ -3854,9 +3883,11 @@
   }
 
   function stopAllAudio(){
+    vsmMicOn = false;   // กันไมค์ใน popup ฟังต่ออัตโนมัติ
     try { window.speechSynthesis.cancel(); } catch(e){}
     try { if (recognition) recognition.abort(); } catch(e){}
     resetMicButton();
+    setVsmMicListening(false);
   }
 
   /* ============================================================================
@@ -4029,25 +4060,31 @@
     const nsyl = syl.map(normalize);
     const forms = acceptableForms(target);                 // normalize แล้ว (คำต้นแบบ + คำพ้อง)
     const all = (candidates && candidates.length ? candidates : []).map(normalize).filter(Boolean);
-    const primary = all[0] || '';
     const allTrue = () => syl.map(() => true);
-    if (!primary) return { got: 0, maxN, flags: syl.map(() => false), heardBest: '' };
+    if (!all.length) return { got: 0, maxN, flags: syl.map(() => false), heardBest: '' };
 
-    // (1) เสียงหลักตรงคำเต็ม/คำพ้อง → แยกว่าเป็น "คำเต็ม" หรือ "รูปย่อ/พูดบางส่วน" ด้วยการเทียบพยางค์
-    const exact = forms.find(f => f && f === primary);
-    if (exact){
-      const flags = alignSyllables(exact, nsyl);
-      const aligned = countFlags(flags);
-      // aligned === 0    → คำพ้องเชิงสัญลักษณ์ (เลข "2", "ม.ค.") = แทนคำเต็ม → ครบทุกพยางค์
-      // aligned === maxN → ออกเสียงครบทุกพยางค์ → ครบ
-      if (aligned === 0 || aligned === maxN) return { got: maxN, maxN, flags: allTrue(), heardBest: primary };
-      // aligned บางส่วน → รูปย่อ/พูดไม่ครบ (เช่น มกรา=3/4, พฤหัส=3/6) → นับเฉพาะพยางค์ที่ออกเสียงจริง
-      return { got: aligned, maxN, flags, heardBest: primary };
+    // ให้คะแนน 1 ตัวเลือก (candidate) ที่ได้ยิน
+    const scoreOne = (cand) => {
+      // (1) ตรงคำเต็ม/คำพ้อง → แยกว่าเป็น "คำเต็ม" หรือ "รูปย่อ/พูดบางส่วน" ด้วยการเทียบพยางค์
+      const exact = forms.find(f => f && f === cand);
+      if (exact){
+        const flags = alignSyllables(exact, nsyl);
+        const aligned = countFlags(flags);
+        if (aligned === 0 || aligned === maxN) return { got: maxN, maxN, flags: allTrue(), heardBest: cand };
+        return { got: aligned, maxN, flags, heardBest: cand };
+      }
+      // (2) นับเฉพาะพยางค์ที่พูดได้จริง — จับทีละพยางค์ตามลำดับ
+      const flags = alignSyllables(cand, nsyl);
+      return { got: countFlags(flags), maxN, flags, heardBest: cand };
+    };
+
+    // ไวต่อเสียงมากที่สุด: ประเมิน "ทุกตัวเลือก" ที่ไมค์ได้ยิน แล้วเลือกผลที่ดีที่สุด
+    let best = scoreOne(all[0]);
+    for (let i = 1; i < all.length && best.got < maxN; i++){
+      const r = scoreOne(all[i]);
+      if (r.got > best.got) best = r;
     }
-
-    // (2) นับเฉพาะพยางค์ที่พูดได้จริง — จับทีละพยางค์ตามลำดับจากเสียงหลัก (ไม่ให้เครดิตเต็มคำจากความคล้าย)
-    const flags = alignSyllables(primary, nsyl);
-    return { got: countFlags(flags), maxN, flags, heardBest: primary };
+    return best;
   }
 
   function evaluateSpokenText(spoken, alts){
@@ -4315,7 +4352,8 @@
   }
   function recItem(h){
     if (h && h.item != null && h.item !== '') return String(h.item);
-    const m = /\(\s*คำที่ฝึก\s*:\s*([^)]+)\)/.exec((h && h.topic) || '');
+    // ดึงชื่อคำ/สระ/ประโยค จากป้ายในวงเล็บทุกแบบ: (คำที่ฝึก: X), (สระ: X), (คำ: X) ฯลฯ
+    const m = /\(\s*[^():]*:\s*([^)]+?)\s*\)/.exec((h && h.topic) || '');
     return m ? m[1].trim() : '';
   }
   function topicScoreAverages(hist){
@@ -4589,10 +4627,9 @@
 
     box.innerHTML = `
       <div class="row g-3 mb-4">
-        <div class="col-6 col-lg-3"><div class="prog-stat"><div class="ps-label">ฝึกทั้งหมด</div><div class="ps-num">${hist.length}<small> ครั้ง</small></div></div></div>
-        <div class="col-6 col-lg-3"><div class="prog-stat"><div class="ps-label">ระยะเวลาที่ฝึก</div><div class="ps-num">${list.length}<small> เดือน</small></div></div></div>
-        <div class="col-6 col-lg-3"><div class="prog-stat"><div class="ps-label">คะแนนเดือนล่าสุด</div><div class="ps-num ${lvl.txt}">${last.avg.toFixed(1)}<small> /2</small></div><div class="ps-sub ${lvl.txt}">${lvl.emoji} ${lvl.label}</div></div></div>
-        <div class="col-6 col-lg-3"><div class="prog-stat"><div class="ps-label">พัฒนาการเทียบเดือนแรก</div><div class="ps-num ${impClass}"><i class="fa-solid ${impIcon} me-1"></i>${impTxt}</div></div></div>
+        <div class="col-6 col-lg-4"><div class="prog-stat"><div class="ps-label">ฝึกทั้งหมด</div><div class="ps-num">${hist.length}<small> ครั้ง</small></div></div></div>
+        <div class="col-6 col-lg-4"><div class="prog-stat"><div class="ps-label">คะแนนเดือนล่าสุด</div><div class="ps-num ${lvl.txt}">${last.avg.toFixed(1)}<small> /2</small></div><div class="ps-sub ${lvl.txt}">${lvl.emoji} ${lvl.label}</div></div></div>
+        <div class="col-6 col-lg-4"><div class="prog-stat"><div class="ps-label">พัฒนาการเทียบเดือนแรก</div><div class="ps-num ${impClass}"><i class="fa-solid ${impIcon} me-1"></i>${impTxt}</div></div></div>
       </div>
 
       <h5 class="mb-3"><i class="fa-solid fa-layer-group text-primary me-2"></i> คะแนนเฉลี่ยแต่ละหัวข้อ (เต็ม 2)</h5>
