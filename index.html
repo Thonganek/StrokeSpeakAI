@@ -2377,7 +2377,7 @@
           </div>
           <div id="auto-score-note" class="helper-line mb-3 d-none-h"><i class="fa-solid fa-microphone-lines"></i> หัวข้อนี้ให้คะแนน<b>อัตโนมัติรายคำจากไมค์</b> — คะแนนแต่ละคำแสดงบนปุ่มเลือกคำด้านบน แล้วกดบันทึกได้เลย</div>
           <div id="vowel-score-criteria" class="helper-line mb-3 d-none-h" style="flex-direction:column; align-items:stretch; gap:8px;">
-            <div style="display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-list-ol"></i> <b>เกณฑ์การให้คะแนนการออกเสียงสระ</b></div>
+            <div style="display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-list-ol"></i> <b>เกณฑ์การให้คะแนนการออกเสียง</b></div>
             <div style="display:flex; align-items:center; gap:10px;"><span class="score-pts">0</span> พูดไม่ได้เลย</div>
             <div style="display:flex; align-items:center; gap:10px;"><span class="score-pts">1</span> พูดออกเสียงได้แค่บางส่วน</div>
             <div style="display:flex; align-items:center; gap:10px;"><span class="score-pts">2</span> พูดออกเสียงได้ถูกต้องครบถ้วน</div>
@@ -2389,24 +2389,29 @@
       </div>
     </section>
   </main>
-  <!-- ==================== Modal: ประเมินการออกเสียงสระ (หัวข้อ 4) ==================== -->
+  <!-- ==================== Modal: ประเมินการออกเสียง (หัวข้อ 4/5/6) — ไมค์อัดเสียง + ให้คะแนน 0/1/2 ==================== -->
   <div class="modal fade" id="vowelScoreModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
       <div class="modal-content" style="border-radius:18px; overflow:hidden;">
         <div class="modal-header bg-primary text-white">
-          <h5 class="modal-title"><i class="fa-solid fa-comment-dots me-2"></i> ประเมินการออกเสียงสระ</h5>
+          <h5 class="modal-title"><i class="fa-solid fa-comment-dots me-2"></i> <span id="vsm-title">ประเมินการออกเสียง</span></h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="ปิด"></button>
         </div>
         <div class="modal-body text-center">
-          <div id="vsm-vowel" style="font-size:5rem; font-weight:800; line-height:1; margin:6px 0 16px; color:var(--teal);">-</div>
-          <button class="btn btn-primary btn-lg mb-3" type="button" onclick="playVowelModelSound()"><i class="fa-solid fa-volume-high me-2"></i> ฟังเสียงต้นแบบ</button>
-          <div class="row justify-content-center mb-4">
+          <div id="vsm-vowel" style="font-size:3.4rem; font-weight:800; line-height:1.1; margin:6px 0 14px; color:var(--teal);">-</div>
+          <div class="d-flex gap-2 justify-content-center flex-wrap mb-3">
+            <button class="btn btn-primary btn-lg" type="button" onclick="playVowelModelSound()"><i class="fa-solid fa-volume-high me-2"></i> ฟังเสียงต้นแบบ</button>
+            <button id="vsm-mic" class="btn btn-danger btn-lg" type="button" onclick="vsmListen()"><i class="fa-solid fa-microphone me-2"></i> พูดตาม (อัดเสียง)</button>
+          </div>
+          <div id="vsm-video-row" class="row justify-content-center mb-3 d-none-h">
             <div class="col-lg-9">
               <div class="ratio ratio-16x9 rounded-3 overflow-hidden bg-light"><iframe id="vsm-video" src="" frameborder="0" allow="encrypted-media" allowfullscreen></iframe></div>
               <small class="text-muted d-block mt-2"><i class="fa-solid fa-film me-1"></i> วิดีโอสาธิตรูปปากการออกเสียง</small>
             </div>
           </div>
-          <div class="fw-bold fs-5 mb-3"><i class="fa-solid fa-hand-pointer me-2 text-primary"></i> แตะเพื่อให้คะแนนการออกเสียง</div>
+          <div id="vsm-heard" class="text-muted mb-2">เสียงที่ระบบได้ยิน: <b>-</b></div>
+          <div id="vsm-result" class="result-box d-none-h mb-3" aria-live="polite"></div>
+          <div class="fw-bold fs-5 mb-3"><i class="fa-solid fa-hand-pointer me-2 text-primary"></i> อัดเสียงให้ระบบวิเคราะห์ หรือแตะเลือกคะแนนเอง</div>
           <div class="score-grid">
             <div class="score-card" id="vsm-card-0" onclick="setVowelScore(0)"><span class="emoji">❌</span><span class="score-pts">0</span> พูดไม่ได้เลย</div>
             <div class="score-card" id="vsm-card-1" onclick="setVowelScore(1)"><span class="emoji">⚠️</span><span class="score-pts">1</span> พูดออกเสียงได้แค่บางส่วน</div>
@@ -3460,25 +3465,25 @@
     updateWordIllus("");
     spokenLog = [];   // เริ่มบันทึกผลการพูดของหัวข้อนี้ใหม่
 
-    // หัวข้อฝึกเสียงพูด (มีไมค์) → ให้คะแนนอัตโนมัติรายคำ จึงตัด "ผลการประเมิน" (ให้คะแนนเอง) ออก
+    // หัวข้อ 1–3 (วิดีโอ) = ให้คะแนนเอง · หัวข้อ 4–6 (ฝึกพูด) = ประเมินผ่าน popup (ไมค์+ให้คะแนนเอง 0/1/2)
     const msSec = document.getElementById('manual-score-section');
     if (msSec) msSec.classList.toggle('d-none-h', !!data.hasAudio);
-    const isVowelTopic = (num === 4);   // หัวข้อ 4 = นักบำบัดกดสระ → popup ให้คะแนน 0/1/2 เอง (ไม่ใช้ไมค์)
+    const isSpeech = !!data.hasAudio;   // หัวข้อ 4/5/6 = ฝึกพูด → แตะคำ → popup (อัดเสียง/ให้คะแนน 0/1/2)
     const asNote = document.getElementById('auto-score-note');
-    if (asNote) asNote.classList.toggle('d-none-h', !data.hasAudio || isVowelTopic);
-    const vsc = document.getElementById('vowel-score-criteria');   // เกณฑ์ 0/1/2 แสดงเฉพาะหัวข้อ 4 (ออกเสียงสระ)
-    if (vsc) vsc.classList.toggle('d-none-h', !isVowelTopic);
-    // หัวข้อ 4 ให้คะแนนผ่าน popup จึงซ่อนส่วนไมค์/ผลการฟัง (กันสับสนและกันคะแนนชนกัน)
+    if (asNote) asNote.classList.add('d-none-h');   // แทนที่ด้วยกล่องเกณฑ์ + popup
+    const vsc = document.getElementById('vowel-score-criteria');   // กล่องเกณฑ์ 0/1/2 แสดงทุกหัวข้อฝึกพูด
+    if (vsc) vsc.classList.toggle('d-none-h', !isSpeech);
+    // ไมค์/ผลการฟังบนหน้าหลัก + ตารางพยางค์ → ย้ายไปอยู่ใน popup ทั้งหมด จึงซ่อนของเดิมทุกหัวข้อฝึกพูด
     ['mic-btn','btn-reset-word','recognition-grid'].forEach(id => {
       const elx = document.getElementById(id);
-      if (elx) elx.classList.toggle('d-none-h', isVowelTopic);
+      if (elx) elx.classList.toggle('d-none-h', isSpeech);
     });
     const wtTitle = document.getElementById('words-title');
-    if (wtTitle) wtTitle.innerHTML = isVowelTopic
-      ? '<i class="fa-solid fa-hand-pointer text-primary me-2"></i> แตะสระเพื่อฟังเสียง ดูรูปปาก และให้คะแนน'
+    if (wtTitle) wtTitle.innerHTML = isSpeech
+      ? '<i class="fa-solid fa-hand-pointer text-primary me-2"></i> แตะคำเพื่อฟังเสียง อัดเสียง และให้คะแนน'
       : '<i class="fa-solid fa-list-check text-primary me-2"></i> เลือกคำที่จะฝึก';
     renderTopicResultSummary();   // ตารางสรุปผลของหัวข้อนี้
-    renderSpeechCheck();          // ตารางตรวจความเที่ยงการพูด (รายคำ)
+    renderSpeechCheck();          // (ยกเลิกตารางพยางค์แล้ว)
 
     const videoSection = document.getElementById('video-section');
     const audioSection = document.getElementById('audio-section');
@@ -3488,27 +3493,19 @@
       videoSection.classList.add('d-none-h');
       document.getElementById('video-player').src = "";
       audioSection.classList.remove('d-none-h');
-
+      // วิดีโอรูปปาก + ไมค์ + ปุ่มให้คะแนนอยู่ใน popup → ซ่อนวิดีโอบนหน้าหลัก แล้วให้ "แตะคำ" เปิด popup ประเมิน
+      vowelMedia.classList.add('d-none-h');
+      document.getElementById('vowel-video').src = "";
       if (num === 4){
-        // สระ: วิดีโอรูปปาก + ปุ่มให้คะแนนอยู่ใน popup → ซ่อนวิดีโอบนหน้าหลัก แล้วให้ "แตะสระ" เปิด popup ประเมิน
-        vowelMedia.classList.add('d-none-h');
-        document.getElementById('vowel-video').src = "";
         currentWordList = data.wordsDetail.map(x => x.w);
         buildWordGrid(currentWordList, null, (w) => openVowelScoreModal(w));
       } else {
-        vowelMedia.classList.add('d-none-h');
-        document.getElementById('vowel-video').src = "";
         currentWordList = data.words.slice();
-        if (data.groups) buildGroupedWordGrid(data.groups);   // แสดงคำเป็นหมวดหมู่ (หัวข้อ 5)
-        else buildWordGrid(data.words, null);
+        if (data.groups) buildGroupedWordGrid(data.groups, null, (w) => openVowelScoreModal(w));   // หมวดหมู่ (หัวข้อ 5)
+        else buildWordGrid(data.words, null, (w) => openVowelScoreModal(w));
       }
-      // เลือกคำแรกอัตโนมัติ (พร้อมโหลดวิดีโอสระตัวแรกถ้าเป็นหัวข้อ 4)
-      if (currentWordList.length){
-        const first = currentWordList[0];
-        selectWord(first);
-        const grid = document.getElementById('words-grid');
-        if (grid._onSelectExtra) grid._onSelectExtra(first);
-      }
+      // เลือกคำแรกอัตโนมัติ (ไม่เปิด popup ตอนโหลด)
+      if (currentWordList.length) selectWord(currentWordList[0]);
     } else {
       audioSection.classList.add('d-none-h');
       vowelMedia.classList.add('d-none-h');
@@ -3532,7 +3529,7 @@
   }
   // แสดงคะแนนพยางค์รายคำบนปุ่มเลือกคำ (โชว์จำนวนพยางค์ที่ต้องพูดไว้เลย) + ปุ่มรีเซ็ตรายคำ
   function refreshWordScores(){
-    const unit = itemUnit(currentTopicNum);   // หัวข้อ 4 = "คะแนน", อื่นๆ = "พยางค์"
+    const unit = itemUnit(currentTopicNum);   // "คะแนน" (0/1/2) ทุกหัวข้อฝึกพูด
     document.querySelectorAll('#words-grid .word-badge').forEach(b => {
       const w = b.dataset.word;
       let sc = b.querySelector('.wb-score');
@@ -3574,59 +3571,11 @@
     resetWordScore(selectedWord);
   }
 
-  /* ตารางตรวจความเที่ยงการพูด (รายคำ) — ใต้ปุ่มเลือกคำ · ประมวลผลอัตโนมัติหลังพูดทุกครั้ง */
+  /* ตารางตรวจความเที่ยงการพูด (รายพยางค์) — ยกเลิกแล้ว: ทุกหัวข้อฝึกพูดให้คะแนน 0/1/2 ผ่าน popup */
   function renderSpeechCheck(){
     const el = document.getElementById('speech-check');
     if (!el) return;
-    if (Number(currentTopicNum) === 4){ el.classList.add('d-none-h'); el.innerHTML = ''; return; }  // หัวข้อ 4 ให้คะแนนผ่าน popup (ไม่ใช้ตารางตรวจพยางค์)
-    const t = topicsData[currentTopicNum];
-    if (!t || !(t.words && t.words.length)){ el.classList.add('d-none-h'); el.innerHTML = ''; return; }
-    el.classList.remove('d-none-h');
-    const q = s => String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-    let totGot = 0, totMax = 0;
-    const rows = t.words.map((w, i) => {
-      const syl = wordSyllables(w);
-      const max = wordMaxScore(w);
-      const log = spokenLog.find(x => x.word === w);
-      const got = wordScoreInfo(w).got;                    // null = ยังไม่ประเมิน
-      totMax += max; totGot += (got || 0);
-      const flags = (log && log.flags) || syl.map((_, k) => got != null && k < got);
-      const chips = syl.map((s, k) => {
-        const st = got == null ? 'sc-syl' : (flags[k] ? 'sc-syl sc-on' : 'sc-syl sc-off');
-        return `<span class="${st}">${escapeHtml(s)}</span>`;
-      }).join('');
-      const heardTxt = (log && log.heard)
-        ? `“${escapeHtml(log.heard)}”${log.manual ? ' <span class="sc-tag">ปรับเอง</span>' : ''}`
-        : '<span class="text-muted">—</span>';
-      const scoreCls = got == null ? 'text-muted' : got >= max ? 'text-success' : got > 0 ? 'text-warning' : 'text-danger';
-      const scoreTxt = got == null ? `–/${max}` : `${got}/${max}`;
-      const active = (w === selectedWord) ? ' sc-active' : '';
-      return `<tr class="sc-row${active}">
-        <td class="text-center text-muted">${i + 1}</td>
-        <td class="sc-word" onclick="selectWord('${q(w)}')" title="เลือกคำนี้ไปฝึก">${escapeHtml(w)}</td>
-        <td class="sc-syls">${chips}</td>
-        <td class="sc-heard">${heardTxt}</td>
-        <td class="text-center fw-bold ${scoreCls}"><span class="sc-scoreval">${scoreTxt}</span><small class="text-muted"> พยางค์</small></td>
-        <td class="text-center sc-adjust">
-          <button type="button" class="sc-btn" title="ลด 1 พยางค์" onclick="adjustWordScore('${q(w)}',-1)">−</button>
-          <button type="button" class="sc-btn" title="เพิ่ม 1 พยางค์" onclick="adjustWordScore('${q(w)}',1)">＋</button>
-          <button type="button" class="sc-btn sc-btn-reset" title="ล้างคะแนนคำนี้ (พูดใหม่)" onclick="resetWordScore('${q(w)}')"><i class="fa-solid fa-rotate-left"></i></button>
-        </td>
-      </tr>`;
-    }).join('');
-    const pct = totMax ? Math.round(totGot / totMax * 100) : 0;
-    el.innerHTML = `
-      <div class="sc-head">
-        <span><i class="fa-solid fa-crosshairs me-1"></i> ตารางตรวจความเที่ยงการพูด (รายคำ)</span>
-        <span class="sc-total">รวม <b>${totGot}/${totMax}</b> พยางค์ (${pct}%)</span>
-      </div>
-      <div class="sc-hint"><i class="fa-solid fa-circle-info me-1"></i> ระบบประเมิน<b>อัตโนมัติจากไมค์</b> โดยนับเฉพาะพยางค์ที่พูดได้จริง · ถ้าระบบฟังคลาดเคลื่อน กด <b>−/＋</b> ปรับให้ตรงกับที่พูดจริงได้</div>
-      <div class="table-responsive">
-        <table class="table table-sm align-middle sc-table mb-0">
-          <thead><tr><th style="width:32px;">#</th><th>คำ</th><th>พยางค์ที่พูดได้</th><th>ระบบได้ยินว่า</th><th class="text-center">คะแนน</th><th class="text-center">ปรับ</th></tr></thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>`;
+    el.classList.add('d-none-h'); el.innerHTML = '';   // ซ่อนตารางพยางค์ทุกหัวข้อ (ใช้ popup 0/1/2 แทน)
   }
 
   /* ปรับคะแนนพยางค์รายคำด้วยมือ (เผื่อไมค์ฟังคลาดเคลื่อน) — เพื่อให้เที่ยงตรงกับที่ผู้ป่วยพูดจริง */
@@ -3662,7 +3611,7 @@
   }
 
   // สร้างปุ่มเลือกคำแบบแบ่งเป็นหมวดหมู่ (เช่น หัวข้อ 5: ตัวเลข/วัน/เดือน/อวัยวะ)
-  function buildGroupedWordGrid(groups, onSelectExtra){
+  function buildGroupedWordGrid(groups, onSelectExtra, onBadgeClick){
     const grid = document.getElementById('words-grid');
     grid.innerHTML = "";
     groups.forEach(g => {
@@ -3680,7 +3629,7 @@
         const emoji = WORD_IMAGES[w];
         b.innerHTML = (emoji ? `<span class="wb-emoji">${emoji}</span>` : "") + `<span>${w}</span>`;
         b.dataset.word = w;
-        b.onclick = () => { selectWord(w); if (onSelectExtra) onSelectExtra(w); };
+        b.onclick = () => { selectWord(w); if (onSelectExtra) onSelectExtra(w); if (onBadgeClick) onBadgeClick(w); };
         items.appendChild(b);
       });
       section.appendChild(items);
@@ -3717,36 +3666,65 @@
     selectWord(w);
     const grid = document.getElementById('words-grid');
     if (grid._onSelectExtra) grid._onSelectExtra(w);
-    if (Number(currentTopicNum) === 4) openVowelScoreModal(w);   // หัวข้อ 4: เลื่อนสระ → เปิด popup ประเมินต่อเนื่อง
+    if (topicsData[currentTopicNum] && topicsData[currentTopicNum].hasAudio) openVowelScoreModal(w);   // ฝึกพูด: เลื่อนคำ → เปิด popup ประเมินต่อเนื่อง
     // เลื่อนปุ่มที่เลือกให้เห็น
     const el = document.querySelector(`.word-badge[data-word="${CSS.escape(w)}"]`);
     if (el) el.scrollIntoView({ behavior:'smooth', block:'nearest', inline:'center' });
   }
 
   /* ============================================================================
-     Popup ประเมินการออกเสียงสระ (หัวข้อ 4) — แตะสระ → ให้คะแนน 0/1/2 เอง
+     Popup ประเมินการออกเสียง (หัวข้อ 4/5/6) — แตะคำ/สระ → อัดเสียง (วิเคราะห์เป็น 0/1/2)
+       หรือแตะให้คะแนนเอง 0/1/2 · ทุกหัวข้อฝึกพูดใช้ popup เดียวกัน
      ============================================================================ */
   let vowelModalWord = "";
   let _vowelScoreModal = null;
 
+  // แปลงผลวิเคราะห์รายพยางค์จากไมค์ → คะแนน 0/1/2 (0=ไม่ได้เลย, บางส่วน=1, ครบ=2)
+  function mapTo012(got, maxN){ return (got|0) <= 0 ? 0 : ((got|0) >= (maxN|0) ? 2 : 1); }
+
+  // เก็บคะแนน 0/1/2 ของ 1 คำ ลง spokenLog (เต็ม 2) — ใช้ร่วมทั้งจากไมค์และการกดเอง
+  function storeWordScore(word, v, manual, heard){
+    if (!word) return;
+    const entry = { word, heard: heard || (manual ? '(ประเมินโดยนักบำบัด)' : '(จากไมค์)'),
+                    got: v, max: 2, flags: [v >= 1, v >= 2], manual: !!manual };
+    const idx = spokenLog.findIndex(x => x.word === word);
+    if (idx >= 0) spokenLog[idx] = entry; else spokenLog.push(entry);
+    renderSpokenNote();
+    refreshWordScores();   // อัปเดตคะแนนบนปุ่มคำ + ตารางสรุปทันที
+  }
+
+  function highlightVsmCard(v){
+    const cls = ['sel-bad','sel-mid','sel-good'];
+    [0,1,2].forEach(i => {
+      const c = document.getElementById('vsm-card-' + i);
+      if (c){ c.classList.remove('sel-bad','sel-mid','sel-good'); if (i === v) c.classList.add(cls[i]); }
+    });
+  }
+  function setVsmHeard(txt){ const el = document.getElementById('vsm-heard'); if (el) el.innerHTML = 'เสียงที่ระบบได้ยิน: <b>' + escapeHtml(txt) + '</b>'; }
+  function vsmResetMic(){ const b = document.getElementById('vsm-mic'); if (!b) return; b.classList.remove('listening'); b.innerHTML = '<i class="fa-solid fa-microphone me-2"></i> พูดตาม (อัดเสียง)'; }
+
   function openVowelScoreModal(word){
     vowelModalWord = word;
     const el = document.getElementById('vsm-vowel'); if (el) el.innerText = word;
-    // โหลดวิดีโอสาธิตรูปปากของสระตัวนี้เข้า popup
-    const item = (topicsData[4].wordsDetail || []).find(x => x.w === word);
-    const vid = document.getElementById('vsm-video'); if (vid) vid.src = item ? item.embedv : "";
-    // ไฮไลต์คะแนนเดิมของสระนี้ (ถ้าเคยให้ไว้ในรอบนี้/ประวัติ)
+    const tt = document.getElementById('vsm-title'); if (tt) tt.innerText = (Number(currentTopicNum) === 4) ? 'ประเมินการออกเสียงสระ' : 'ประเมินการพูด';
+    // วิดีโอรูปปาก: แสดงเฉพาะคำที่มีวิดีโอ (หัวข้อ 4 = สระ) นอกนั้นซ่อน
+    const detail = ((topicsData[currentTopicNum] && topicsData[currentTopicNum].wordsDetail) || []).find(x => x.w === word);
+    const row = document.getElementById('vsm-video-row');
+    const vid = document.getElementById('vsm-video');
+    if (detail && detail.embedv){ if (row) row.classList.remove('d-none-h'); if (vid) vid.src = detail.embedv; }
+    else { if (row) row.classList.add('d-none-h'); if (vid) vid.src = ""; }
+    // รีเซ็ตผลไมค์เดิม + ไฮไลต์คะแนนเดิม (ถ้าเคยให้ไว้ในรอบนี้/ประวัติ)
+    setVsmHeard('-'); vsmResetMic();
+    const rb = document.getElementById('vsm-result'); if (rb){ rb.classList.add('d-none-h'); rb.innerHTML = ''; }
     const prev = wordScoreInfo(word).got;   // null = ยังไม่ประเมิน
-    const cls = ['sel-bad','sel-mid','sel-good'];
-    [0,1,2].forEach(v => {
-      const c = document.getElementById('vsm-card-' + v);
-      if (c){ c.classList.remove('sel-bad','sel-mid','sel-good'); if (prev === v) c.classList.add(cls[v]); }
-    });
+    highlightVsmCard(prev);
     if (!_vowelScoreModal){
       _vowelScoreModal = new bootstrap.Modal('#vowelScoreModal');
-      // หยุดวิดีโอเมื่อปิด popup
+      // ปิด popup → หยุดวิดีโอ + หยุดไมค์
       document.getElementById('vowelScoreModal').addEventListener('hidden.bs.modal', () => {
         const v = document.getElementById('vsm-video'); if (v) v.src = "";
+        try { if (recognition) recognition.abort(); } catch(e){}
+        vsmResetMic();
       });
     }
     _vowelScoreModal.show();
@@ -3754,15 +3732,52 @@
 
   function playVowelModelSound(){ if (vowelModalWord) speak(vowelModalWord, ttsRate); }
 
-  // นักบำบัดให้คะแนนสระ 0/1/2 → เก็บลง spokenLog (เต็ม 2 คะแนน) แล้วปิด popup
+  // ไมค์ใน popup: อัดเสียง → วิเคราะห์ → ให้คะแนน 0/1/2 อัตโนมัติ
+  function vsmListen(){
+    const word = vowelModalWord;
+    if (!word) return;
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR){ alert("บราวเซอร์นี้ไม่รองรับระบบเสียง แนะนำให้ใช้ Google Chrome ครับ"); return; }
+    window.speechSynthesis.cancel();
+    recognition = new SR();
+    recognition.lang = 'th-TH'; recognition.interimResults = false; recognition.maxAlternatives = 8;
+    const btn = document.getElementById('vsm-mic');
+    if (btn){ btn.classList.add('listening'); btn.innerHTML = '<i class="fa-solid fa-ear-listen me-2"></i> กำลังฟัง... พูดได้เลย'; }
+    setVsmHeard('🎧 ...');
+    recognition.onresult = (event) => {
+      const alts = [];
+      for (let i = 0; i < event.results[0].length; i++) alts.push(event.results[0][i].transcript.trim());
+      const spoken = alts[0] || "";
+      setVsmHeard(spoken || '-');
+      vsmEvaluate(word, spoken, alts);
+    };
+    recognition.onerror = (e) => { vsmResetMic(); alert(micErrorMessage(e)); };
+    recognition.onend = () => vsmResetMic();
+    try { recognition.start(); } catch(err){ vsmResetMic(); }
+  }
+
+  function vsmEvaluate(word, spoken, alts){
+    const candidates = (alts && alts.length ? alts : [spoken]);
+    const res = scoreSyllablesStrict(word, candidates);
+    const score = mapTo012(res.got, res.maxN);
+    const box = document.getElementById('vsm-result');
+    if (box){
+      box.classList.remove('d-none-h');
+      if (score >= 2){ box.className = 'result-box result-good mb-3'; box.innerHTML = '✅ พูดออกเสียงได้ถูกต้องครบถ้วน — ได้ 2 คะแนน'; speak("เก่งมากครับ", 1); }
+      else if (score === 1){ box.className = 'result-box result-mid mb-3'; box.innerHTML = '⚠️ พูดออกเสียงได้แค่บางส่วน — ได้ 1 คะแนน (ลองพูดให้ครบอีกครั้งได้นะครับ)'; speak("เกือบได้แล้วครับ", 1); }
+      else { box.className = 'result-box result-bad mb-3'; box.innerHTML = `❌ พูดไม่ได้เลย — ระบบได้ยินเป็น "${escapeHtml(spoken)}" (ได้ 0 คะแนน)`; speak("ลองอีกครั้งนะครับ", 1); }
+    }
+    storeWordScore(word, score, false, spoken);   // จากไมค์ → manual:false
+    highlightVsmCard(score);
+  }
+
+  // นักบำบัดกดให้คะแนน 0/1/2 เอง → เก็บคะแนนแล้วปิด popup
   function setVowelScore(v){
     const word = vowelModalWord;
     if (!word) return;
-    const entry = { word, heard:'(ประเมินโดยนักบำบัด)', got:v, max:2, flags:[v >= 1, v >= 2], manual:true };
-    const idx = spokenLog.findIndex(x => x.word === word);
-    if (idx >= 0) spokenLog[idx] = entry; else spokenLog.push(entry);
-    renderSpokenNote();
-    refreshWordScores();   // อัปเดตคะแนนบนปุ่มสระ + ตารางสรุปทันที
+    try { if (recognition) recognition.abort(); } catch(e){}
+    storeWordScore(word, v, true);
+    highlightVsmCard(v);
     if (_vowelScoreModal) _vowelScoreModal.hide();
   }
 
@@ -3840,21 +3855,22 @@
       document.getElementById('speech-output').innerText = spoken || "-";
       evaluateSpokenText(spoken, alts);
     };
-    recognition.onerror = (e) => {
-      resetMicButton();
-      let msg = "เกิดข้อผิดพลาด: " + e.error;
-      if (e.error === 'not-allowed' || e.error === 'service-not-allowed')
-        msg = "⚠️ ยังไม่ได้อนุญาตสิทธิ์ไมโครโฟน\nกรุณากดอนุญาต (Allow) ไมค์บนเว็บนี้ก่อนครับ";
-      else if (e.error === 'no-speech')
-        msg = "ไม่ได้ยินเสียงพูดครับ ลองกดปุ่มแล้วพูดใหม่อีกครั้งนะครับ";
-      else if (e.error === 'network')
-        msg = "⚠️ ระบบเสียงต้องเปิดผ่าน https หรือ localhost\nหากเปิดไฟล์ตรงๆ (file://) ไมค์อาจใช้ไม่ได้ครับ";
-      alert(msg);
-    };
+    recognition.onerror = (e) => { resetMicButton(); alert(micErrorMessage(e)); };
     recognition.onend = () => resetMicButton();
 
     try { recognition.start(); }
     catch(err){ resetMicButton(); }
+  }
+
+  // ข้อความแจ้งเตือนของไมค์ (ใช้ร่วมทั้งไมค์หน้าหลักและใน popup)
+  function micErrorMessage(e){
+    if (e.error === 'not-allowed' || e.error === 'service-not-allowed')
+      return "⚠️ ยังไม่ได้อนุญาตสิทธิ์ไมโครโฟน\nกรุณากดอนุญาต (Allow) ไมค์บนเว็บนี้ก่อนครับ";
+    if (e.error === 'no-speech')
+      return "ไม่ได้ยินเสียงพูดครับ ลองกดปุ่มแล้วพูดใหม่อีกครั้งนะครับ";
+    if (e.error === 'network')
+      return "⚠️ ระบบเสียงต้องเปิดผ่าน https หรือ localhost\nหากเปิดไฟล์ตรงๆ (file://) ไมค์อาจใช้ไม่ได้ครับ";
+    return "เกิดข้อผิดพลาด: " + e.error;
   }
 
   function resetMicButton(){
@@ -3917,11 +3933,11 @@
     "ขอบคุณมากครับ":["ขอบ","คุณ","มาก","ครับ"], "ขอบคุณมากค่ะ":["ขอบ","คุณ","มาก","ค่ะ"]
   };
   function wordSyllables(word){ return WORD_SYLLABLES[word] || [String(word||'')]; }
-  // สระในหัวข้อ 4 ให้คะแนนแบบ 0/1/2 (เต็ม 2 คะแนน) ไม่ใช่รายพยางค์
+  // ทุกหัวข้อฝึกพูด (4/5/6) ให้คะแนนแบบ 0/1/2 (เต็ม 2 คะแนน) ต่อ 1 คำ/สระ — ไม่ใช่รายพยางค์
   const VOWEL_WORDS = new Set(((topicsData[4] && topicsData[4].wordsDetail) || []).map(x => x.w));
   function isVowelWord(word){ return VOWEL_WORDS.has(word); }
-  function itemUnit(topicNum){ return Number(topicNum) === 4 ? 'คะแนน' : 'พยางค์'; }
-  function wordMaxScore(word){ return isVowelWord(word) ? 2 : wordSyllables(word).length; }
+  function itemUnit(topicNum){ return 'คะแนน'; }   // ตัดหน่วย "พยางค์" ออกทั้งหมด → ใช้ "คะแนน" 0/1/2
+  function wordMaxScore(word){ return 2; }          // เต็ม 2 คะแนนต่อคำ/สระ ทุกหัวข้อ
   // จำนวนพยางค์เต็มของ 1 เรคคอร์ด (จาก maxScore หรือแกะจากข้อความ "x/N พยางค์")
   function recMax(h){
     if (h && typeof h.maxScore === 'number' && h.maxScore > 0) return h.maxScore;
@@ -4008,24 +4024,24 @@
     const target = selectedWord;
     const candidates = (alts && alts.length ? alts : [spoken]);
 
-    const res  = scoreSyllablesStrict(target, candidates);
-    const got  = res.got, maxN = res.maxN;
+    const res   = scoreSyllablesStrict(target, candidates);
+    const score = mapTo012(res.got, res.maxN);   // → 0/1/2
 
-    if (got >= maxN){
+    if (score >= 2){
       box.className = "result-box result-good";
-      box.innerHTML = `✅ พูดได้ครบ <b>${maxN} พยางค์</b> — ได้ ${maxN} คะแนน`;
+      box.innerHTML = `✅ พูดออกเสียงได้ถูกต้องครบถ้วน — ได้ 2 คะแนน`;
       speak("เก่งมากครับ", 1);
-    } else if (got > 0){
+    } else if (score === 1){
       box.className = "result-box result-mid";
-      box.innerHTML = `⚠️ พูดได้ <b>${got}/${maxN} พยางค์</b> — ได้ ${got} คะแนน (พูดให้ครบทั้งคำนะครับ)`;
+      box.innerHTML = `⚠️ พูดออกเสียงได้แค่บางส่วน — ได้ 1 คะแนน (พูดให้ครบทั้งคำนะครับ)`;
       speak("เกือบได้แล้วครับ พูดให้ครบ", 1);
     } else {
       box.className = "result-box result-bad";
-      box.innerHTML = `❌ ยังพูดไม่ได้ (0/${maxN} พยางค์) — ระบบได้ยินเป็น "${spoken}" ลองอีกครั้งนะครับ`;
+      box.innerHTML = `❌ พูดไม่ได้เลย — ระบบได้ยินเป็น "${escapeHtml(spoken)}" ลองอีกครั้งนะครับ`;
       speak("ลองอีกครั้งนะครับ", 1);
     }
 
-    logSpokenResult(target, spoken, got, maxN, res.flags);
+    storeWordScore(target, score, false, spoken);
   }
 
   /* บันทึกผลการพูดสะสม (1 บรรทัดต่อ 1 คำ, พูดซ้ำ = อัปเดตครั้งล่าสุด) แล้วให้คะแนนเฉลี่ยตามการพูดทั้งหมด */
@@ -4038,22 +4054,15 @@
     refreshWordScores();   // อัปเดตคะแนนบนปุ่มคำ + ตารางตรวจความเที่ยง ทันทีที่พูด
   }
 
-  // สรุปว่าแต่ละคำพูดได้กี่พยางค์ ลงช่องบันทึก
+  // สรุปคะแนนรายคำ (0/1/2) ลงช่องบันทึก — ทุกหัวข้อฝึกพูดใช้เกณฑ์เดียวกัน
   function renderSpokenNote(){
     const noteEl = document.getElementById('evalNote');
     if (!spokenLog.length){ noteEl.value = ""; return; }
     const totGot = spokenLog.reduce((s,x) => s + x.got, 0);
     const totMax = spokenLog.reduce((s,x) => s + x.max, 0);
-    // หัวข้อ 4: สรุปแบบเกณฑ์ออกเสียงสระ (0/1/2)
-    if (Number(currentTopicNum) === 4){
-      const rubric = g => g >= 2 ? '✅ พูดออกเสียงได้ถูกต้องครบถ้วน' : g === 1 ? '⚠️ พูดออกเสียงได้แค่บางส่วน' : '❌ พูดไม่ได้เลย';
-      const lines = spokenLog.map(x => `"${x.word}" → ${x.got}/${x.max} คะแนน (${rubric(x.got)})`);
-      noteEl.value = `[สรุปการออกเสียงสระ] ได้รวม ${totGot}/${totMax} คะแนน\n` + lines.join("\n");
-      return;
-    }
-    const icon = x => x.got >= x.max ? '✅' : x.got > 0 ? '⚠️' : '❌';
-    const lines = spokenLog.map(x => `${icon(x)} "${x.word}" → ${x.got}/${x.max} พยางค์`);
-    noteEl.value = `[สรุปการฝึกพูด] พูดได้รวม ${totGot}/${totMax} พยางค์ (พยางค์ละ 1 คะแนน)\n` + lines.join("\n");
+    const rubric = g => g >= 2 ? '✅ พูดออกเสียงได้ถูกต้องครบถ้วน' : g === 1 ? '⚠️ พูดออกเสียงได้แค่บางส่วน' : '❌ พูดไม่ได้เลย';
+    const lines = spokenLog.map(x => `"${x.word}" → ${x.got}/${x.max} คะแนน (${rubric(x.got)})`);
+    noteEl.value = `[สรุปผลการฝึกพูด] ได้รวม ${totGot}/${totMax} คะแนน\n` + lines.join("\n");
   }
 
   function resetEval(){
@@ -4109,18 +4118,16 @@
     // สร้างเรคคอร์ด: หัวข้อ 4–6 = 1 เรคคอร์ดต่อ 1 คำ (คะแนนจากไมค์) · หัวข้อ 1–3 = 1 เรคคอร์ดรวม
     let records = [];
     if (itemized){
-      const emptyMsg = (Number(currentTopicNum) === 4)
-        ? "ยังไม่มีสระที่ให้คะแนน — แตะสระแล้วกดให้คะแนนใน popup ก่อนบันทึกครับ"
-        : "ยังไม่มีคำที่ให้คะแนน — ให้ผู้ป่วยพูดตามให้ระบบฟังก่อนบันทึกครับ";
-      if (!spokenLog.length){ alert(emptyMsg); return; }
-      const unit = itemUnit(currentTopicNum);
+      if (!spokenLog.length){ alert("ยังไม่มีคำ/สระที่ให้คะแนน — แตะคำแล้วอัดเสียงหรือกดให้คะแนนใน popup ก่อนบันทึกครับ"); return; }
       const itemLabel = (Number(currentTopicNum) === 4) ? 'สระ' : 'คำที่ฝึก';
       records = spokenLog.map((x, i) => {
+        const v = Math.max(0, Math.min(2, x.got | 0));
         return Object.assign(base(), {
           ts: now.getTime() + i,
           topicNum: currentTopicNum, item: x.word,
           topic: currentTopicName + ` (${itemLabel}: ${x.word})`,
-          score: `${x.got}/${x.max} ${unit}`, scoreValue: x.got, maxScore: x.max
+          // คอลัมน์ H "ผลการประเมิน" = ป้ายข้อความ · คอลัมน์ I "คะแนน (0-2)" = ตัวเลข 0/1/2
+          score: (CAT[v] != null ? CAT[v] : String(v)), scoreValue: v, maxScore: 2
         });
       });
     } else {
@@ -4317,7 +4324,7 @@
         const pct = Math.round(a.avg * 100);          // a.avg = สัดส่วนพยางค์ที่พูดได้ 0–1
         const c = pct >= 67 ? 'good' : pct >= 34 ? 'mid' : 'bad';
         const tcls = pct >= 67 ? 'text-success' : pct >= 34 ? 'text-warning' : 'text-danger';
-        rows += `<div class="tsc-row"><div class="tsc-label"><b>${tn}.</b> ${escapeHtml(short)}<small class="tsc-sub">พูดได้ ${a.got}/${a.max} พยางค์</small></div><div class="tsc-barwrap"><span class="tsc-bar fill-${c}" style="width:${pct}%"></span></div><div class="tsc-val ${tcls}">${pct}%</div></div>`;
+        rows += `<div class="tsc-row"><div class="tsc-label"><b>${tn}.</b> ${escapeHtml(short)}<small class="tsc-sub">ได้ ${a.got}/${a.max} คะแนน</small></div><div class="tsc-barwrap"><span class="tsc-bar fill-${c}" style="width:${pct}%"></span></div><div class="tsc-val ${tcls}">${pct}%</div></div>`;
       } else {
         const c = levelInfo(a.avg).color;
         rows += `<div class="tsc-row"><div class="tsc-label"><b>${tn}.</b> ${escapeHtml(short)}<small class="tsc-sub">ประเมินรวม</small></div><div class="tsc-barwrap"><span class="tsc-bar fill-${c}" style="width:${Math.round(a.avg/2*100)}%"></span></div><div class="tsc-val ${levelInfo(a.avg).txt}">${a.avg.toFixed(1)}<small>/2</small></div></div>`;
