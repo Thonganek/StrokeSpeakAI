@@ -2413,9 +2413,13 @@
           <div id="vsm-result" class="result-box d-none-h mb-3" aria-live="polite"></div>
           <div class="fw-bold fs-5 mb-3"><i class="fa-solid fa-hand-pointer me-2 text-primary"></i> อัดเสียงให้ระบบวิเคราะห์ หรือแตะเลือกคะแนนเอง</div>
           <div class="score-grid">
-            <div class="score-card" id="vsm-card-0" onclick="setVowelScore(0)"><span class="emoji">❌</span><span class="score-pts">0</span> พูดไม่ได้เลย</div>
-            <div class="score-card" id="vsm-card-1" onclick="setVowelScore(1)"><span class="emoji">⚠️</span><span class="score-pts">1</span> พูดออกเสียงได้แค่บางส่วน</div>
-            <div class="score-card" id="vsm-card-2" onclick="setVowelScore(2)"><span class="emoji">✅</span><span class="score-pts">2</span> พูดออกเสียงได้ถูกต้องครบถ้วน</div>
+            <div class="score-card" id="vsm-card-0" onclick="vsmSelectScore(0)"><span class="emoji">❌</span><span class="score-pts">0</span> พูดไม่ได้เลย</div>
+            <div class="score-card" id="vsm-card-1" onclick="vsmSelectScore(1)"><span class="emoji">⚠️</span><span class="score-pts">1</span> พูดออกเสียงได้แค่บางส่วน</div>
+            <div class="score-card" id="vsm-card-2" onclick="vsmSelectScore(2)"><span class="emoji">✅</span><span class="score-pts">2</span> พูดออกเสียงได้ถูกต้องครบถ้วน</div>
+          </div>
+          <div class="d-flex gap-2 justify-content-center flex-wrap mt-4">
+            <button class="btn btn-outline-secondary btn-lg" type="button" onclick="vsmResetScore()"><i class="fa-solid fa-rotate-left me-2"></i> รีเซ็ตคะแนนคำนี้</button>
+            <button class="btn btn-success btn-lg" type="button" onclick="vsmConfirmScore()"><i class="fa-solid fa-floppy-disk me-2"></i> บันทึกคะแนน (ยืนยัน)</button>
           </div>
         </div>
       </div>
@@ -2557,7 +2561,7 @@
         (ดูวิธีทำในไฟล์ GoogleAppsScript-API.gs)
         ถ้าเว้นว่าง "" ระบบจะทำงานแบบออฟไลน์ (บันทึกในเครื่องอย่างเดียว)
      ============================================================================ */
-  const GOOGLE_SCRIPT_URL = "";   // ← ตัวอย่าง: "https://script.google.com/macros/s/AKfycb.../exec"
+  const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyrCxUAo5kwd8R4ZLAsIht6mlFLcF4qLeU4BLfpL8m9CN0TzVobmHM6FW8qe2w3bMAs/exec";
 
   /* -------------------- ฐานข้อมูลผู้ป่วยเริ่มต้น (ฝังในไฟล์) -------------------- */
   // 👩‍⚕️ บัญชีพยาบาล/เจ้าหน้าที่ (ระบบล็อกอินเบื้องต้นฝั่งหน้าเว็บ — แก้ไข/เพิ่มบัญชีได้ที่นี่)
@@ -3678,6 +3682,10 @@
      ============================================================================ */
   let vowelModalWord = "";
   let _vowelScoreModal = null;
+  // คะแนนที่ "เลือกไว้" ในรอบนี้ (ยังไม่ยืนยัน) — ต้องกด "บันทึกคะแนน (ยืนยัน)" จึงจะเก็บลง spokenLog
+  let pendingVsmScore = null;   // null = ยังไม่เลือก
+  let pendingVsmManual = false; // true = นักบำบัดกดเอง, false = จากไมค์
+  let pendingVsmHeard = "";     // ข้อความที่ไมค์ได้ยิน (ถ้ามี)
 
   // แปลงผลวิเคราะห์รายพยางค์จากไมค์ → คะแนน 0/1/2 (0=ไม่ได้เลย, บางส่วน=1, ครบ=2)
   function mapTo012(got, maxN){ return (got|0) <= 0 ? 0 : ((got|0) >= (maxN|0) ? 2 : 1); }
@@ -3713,10 +3721,11 @@
     const vid = document.getElementById('vsm-video');
     if (detail && detail.embedv){ if (row) row.classList.remove('d-none-h'); if (vid) vid.src = detail.embedv; }
     else { if (row) row.classList.add('d-none-h'); if (vid) vid.src = ""; }
-    // รีเซ็ตผลไมค์เดิม + ไฮไลต์คะแนนเดิม (ถ้าเคยให้ไว้ในรอบนี้/ประวัติ)
+    // รีเซ็ตผลไมค์เดิม + ตั้งคะแนนที่เลือกไว้ = คะแนนเดิมของคำนี้ (ถ้าเคยให้ไว้ในรอบนี้/ประวัติ)
     setVsmHeard('-'); vsmResetMic();
     const rb = document.getElementById('vsm-result'); if (rb){ rb.classList.add('d-none-h'); rb.innerHTML = ''; }
     const prev = wordScoreInfo(word).got;   // null = ยังไม่ประเมิน
+    pendingVsmScore = prev; pendingVsmManual = true; pendingVsmHeard = "";
     highlightVsmCard(prev);
     if (!_vowelScoreModal){
       _vowelScoreModal = new bootstrap.Modal('#vowelScoreModal');
@@ -3763,22 +3772,45 @@
     const box = document.getElementById('vsm-result');
     if (box){
       box.classList.remove('d-none-h');
-      if (score >= 2){ box.className = 'result-box result-good mb-3'; box.innerHTML = '✅ พูดออกเสียงได้ถูกต้องครบถ้วน — ได้ 2 คะแนน'; speak("เก่งมากครับ", 1); }
-      else if (score === 1){ box.className = 'result-box result-mid mb-3'; box.innerHTML = '⚠️ พูดออกเสียงได้แค่บางส่วน — ได้ 1 คะแนน (ลองพูดให้ครบอีกครั้งได้นะครับ)'; speak("เกือบได้แล้วครับ", 1); }
-      else { box.className = 'result-box result-bad mb-3'; box.innerHTML = `❌ พูดไม่ได้เลย — ระบบได้ยินเป็น "${escapeHtml(spoken)}" (ได้ 0 คะแนน)`; speak("ลองอีกครั้งนะครับ", 1); }
+      if (score >= 2){ box.className = 'result-box result-good mb-3'; box.innerHTML = '✅ พูดออกเสียงได้ถูกต้องครบถ้วน — ได้ 2 คะแนน · กด <b>บันทึกคะแนน</b> เพื่อยืนยัน'; speak("เก่งมากครับ", 1); }
+      else if (score === 1){ box.className = 'result-box result-mid mb-3'; box.innerHTML = '⚠️ พูดออกเสียงได้แค่บางส่วน — ได้ 1 คะแนน · พูดใหม่ได้ หรือกด <b>บันทึกคะแนน</b>'; speak("เกือบได้แล้วครับ", 1); }
+      else { box.className = 'result-box result-bad mb-3'; box.innerHTML = `❌ พูดไม่ได้เลย — ระบบได้ยินเป็น "${escapeHtml(spoken)}" (0 คะแนน) · ลองใหม่ได้`; speak("ลองอีกครั้งนะครับ", 1); }
     }
-    storeWordScore(word, score, false, spoken);   // จากไมค์ → manual:false
+    // ตั้งเป็น "คะแนนที่เลือกไว้" (ยังไม่เก็บ) — รอกดบันทึกยืนยัน
+    pendingVsmScore = score; pendingVsmManual = false; pendingVsmHeard = spoken;
     highlightVsmCard(score);
   }
 
-  // นักบำบัดกดให้คะแนน 0/1/2 เอง → เก็บคะแนนแล้วปิด popup
-  function setVowelScore(v){
+  // แตะการ์ดให้คะแนนเอง → เลือกไว้ (ไฮไลต์) ยังไม่เก็บจนกว่าจะกดบันทึกยืนยัน
+  function vsmSelectScore(v){
+    if (!vowelModalWord) return;
+    try { if (recognition) recognition.abort(); } catch(e){}
+    vsmResetMic();
+    pendingVsmScore = v; pendingVsmManual = true; pendingVsmHeard = "";
+    highlightVsmCard(v);
+  }
+
+  // กด "บันทึกคะแนน (ยืนยัน)" → เก็บคะแนนที่เลือกไว้ลง spokenLog แล้วปิด popup
+  function vsmConfirmScore(){
+    const word = vowelModalWord;
+    if (!word) return;
+    if (pendingVsmScore == null){ alert("กรุณาอัดเสียงหรือแตะเลือกคะแนนก่อนบันทึกครับ"); return; }
+    try { if (recognition) recognition.abort(); } catch(e){}
+    storeWordScore(word, pendingVsmScore, pendingVsmManual, pendingVsmHeard || undefined);
+    if (_vowelScoreModal) _vowelScoreModal.hide();
+  }
+
+  // กด "รีเซ็ตคะแนนคำนี้" → ล้างคะแนนของคำนี้ (พูด/ให้คะแนนใหม่ได้) โดยไม่ปิด popup
+  function vsmResetScore(){
     const word = vowelModalWord;
     if (!word) return;
     try { if (recognition) recognition.abort(); } catch(e){}
-    storeWordScore(word, v, true);
-    highlightVsmCard(v);
-    if (_vowelScoreModal) _vowelScoreModal.hide();
+    vsmResetMic();
+    resetWordScore(word);   // ล้างออกจาก spokenLog + อัปเดตปุ่มคำ
+    pendingVsmScore = null; pendingVsmManual = false; pendingVsmHeard = "";
+    highlightVsmCard(null);
+    setVsmHeard('-');
+    const rb = document.getElementById('vsm-result'); if (rb){ rb.classList.add('d-none-h'); rb.innerHTML = ''; }
   }
 
   /* ============================================================================
